@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Vessel Traffic Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        /* Add CSS styles for other elements as needed */
+
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div style="background-color: #009df4; height: 10%;"></div>
+    
+    <!-- Mapping -->
+    <div style="position: absolute; left: 50px; top: 50px;">
+        <!-- Insert your mapping component here -->
+        <!-- You will need to use a JavaScript library or map service for this -->
+    </div>
+    
+    <!-- Sidebar -->
+    <div style="background-color: #ffffff; height: 100%; width: 20%; position: absolute; left: 0;">
+        <!-- User -->
+        <div style="text-align: center;">
+            <img src="photos\user.png" alt="User" style="width: 40%; height: auto; margin-top: 10px;">
+            <p style="font-size: 20px; font-weight: bold;">User</p>
+        </div>
+
+        <!-- View Ships -->
+        <div style="text-align: center;">
+            <img src="photos\map-icon.png" alt="View Ships" style="width: 10%; height: auto; cursor: pointer;">
+            <p style="font-size: 10px; font-weight: bold;">View Your Booked Ships</p>
+        </div>
+
+        <!-- Book Ships -->
+        <div style="text-align: center;">
+            <img src="photos\booking.png" alt="Book Ships" style="width: 20%; height: auto; cursor: pointer;">
+            <p style="font-size: 10px; font-weight: bold;">Book Our Ships</p>
+        </div>
+
+        <!-- Time and Date -->
+        <div style="text-align: center;">
+            <img src="photos\clock.png" alt="Clock" style="width: 50px; height: 50px;">
+            <p id="date-time" style="font-size: 12px;"></p>
+        </div>
+    </div>
+
+    <!-- JavaScript for updating time and date -->
+    <script>
+        function showTime() {
+            const date = new Date();
+            const time = date.toLocaleTimeString();
+            const dateStr = date.toLocaleDateString();
+            document.getElementById('date-time').innerHTML = `${time} <br> ${dateStr}`;
+            setTimeout(showTime, 1000);
+        }
+        showTime();
+    </script>
+</body>
+</html>

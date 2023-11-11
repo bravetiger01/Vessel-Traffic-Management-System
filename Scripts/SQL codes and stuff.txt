@@ -1,0 +1,13 @@
+------------------------------------------------------------------------------------------------
+Database Name = VTMS
+Table = Supplier
+Table2 = Admin
+
+Supplier:-
+--> Book ship by making a request.
+--> View his/her bookeed ship status.
+
+Admin:-
+--> Accept or Decline user requests.
+--> Show ships routes.
+--> Delay arrival or disembark of ships.
