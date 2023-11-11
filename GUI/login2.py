@@ -36,7 +36,10 @@ heading.place(x=100, y=5)
 # Sign In
 def signin():
     username = user_name.get()
-    code = password.get()
+    code = pass_word.get()
+
+    print(username)
+    print(code)
 
 # Username
 def on_enter(e):
@@ -58,17 +61,17 @@ Frame(frame, width = 295, height=2, bg='black').place(x=25, y=107)
 # Password
 
 def on_enter1(e):
-    password.delete(0, 'end')
+    pass_word.delete(0, 'end')
 def on_leave1(e):
-    name = password.get()
+    name = pass_word.get()
     if name == '':
-        password.insert(0, 'Password')
+        pass_word.insert(0, 'Password')
 
-password = Entry(frame, width=25, fg='black', border = 0, bg='white', font=('Microsoft Yahei UI Light', 11))
-password.place(x=30, y=150)
-password.insert(0, 'Password')
-password.bind('<FocusIn>', on_enter1)
-password.bind('<FocusOut>', on_leave1)
+pass_word = Entry(frame, width=25, fg='black', border = 0, bg='white', font=('Microsoft Yahei UI Light', 11))
+pass_word.place(x=30, y=150)
+pass_word.insert(0, 'Password')
+pass_word.bind('<FocusIn>', on_enter1)
+pass_word.bind('<FocusOut>', on_leave1)
 
 Frame(frame, width=295, height=2, border=0, bg='black').place(x=25, y=177)
 

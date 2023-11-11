@@ -1,19 +1,15 @@
 from tkinter import *
 from tkinter import messagebox
 from PIL import ImageTk, Image
-import mysql.connector as mysql
+import mysql.connector as connector
 from datetime import *
 import time
 
 # ----------------MySQL Database-------------
 # Connecting Database
 def connect_to_database():
-    db = mysql.connect(
-        host="localhost",
-        user="root",
-        password="nakuldesai2510",
-        database="vtms1"
-    )
+    db = connector.connect(host="localhost", user="root", password="nakuldesai2510",database="vtms1")
+
     return db
 
 # ---------------------GUI-------------------
@@ -53,42 +49,56 @@ def signin():
     username = user_name.get()
     key = password.get()
     # Verify admin credentials
-    if verify_admin(username, key):
-        messagebox.showinfo("Login Successful", "Admin login successful!")
-        # Call admin menu function
-        admin_menu()
-        print(1)
-    # Verify supplier credentials
-    elif verify_supplier(username, key):
-        messagebox.showinfo("Login Successful", "Supplier login successful!")
-        # Call supplier menu function
-        supplier_menu()
-        print(2)
-
+    if 'admin' in username:
+        if verify_admin(username, key):
+            messagebox.showinfo("Login Successful", "Admin login successful!")
+            # Call admin menu function
+            admin_menu()
+            print(1)
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password.")
+            print(3)
     else:
-        messagebox.showerror("Login Failed", "Invalid username or password.")
-        print(3)
+        # Verify supplier credentials
+        if verify_supplier(username, key):
+            messagebox.showinfo("Login Successful", "Supplier login successful!")
+            # Call supplier menu function
+            supplier_menu()
+            print(2)
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password.")
+            print(3)
 
 
 # Admin login verification
 def verify_admin(username, password):
     db = connect_to_database()
     cursor = db.cursor()
-    query = "SELECT * FROM admin WHERE username = %s AND password = %s"
-    cursor.execute(query, (username, password))
-    result = cursor.fetchone()
-    db.close()
-    return result is not None
+    cursor.execute("select * from login")
+    result = cursor.fetchall()
+    for data in result:
+        if data[1] == username and data[2] == password:
+            db.close()
+            return result is not None
+        else:
+            pass
+    else:
+        return result is None
 
 # Supplier login verification
 def verify_supplier(username, password):
     db = connect_to_database()
     cursor = db.cursor()
-    query = "SELECT * FROM supplier WHERE username = %s AND password = %s"
-    cursor.execute(query, (username, password))
-    result = cursor.fetchone()
-    db.close()
-    return result is not None
+    cursor.execute("select * from login")
+    result = cursor.fetchall()
+    for data in result:
+        if data[1] == username and data[2] == password:
+            db.close()
+            return result is not None
+        else:
+            pass
+    else:
+        return result is None
 
 # -------------------------------Supplier------------------------------
 def supplier_menu():
