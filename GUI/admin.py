@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 import random
 import mysql.connector as connector
 
@@ -10,7 +10,7 @@ import mysql.connector as connector
 class Ships:
     speed = 0
     # IMO Number = The International Maritime Organization (IMO) number uniquely identifies each seagoing ship. It is an important reference for tracking and managing vessels.
-    def __init__(self, name, IMO_Number ,condition, navigation_status, type, Embarkation, Destination):
+    def __init__(self, name, IMO_Number , condition, capacity, navigation_status, type, Embarkation, Destination):
         self.Name = name
         self.Condition = condition
         self.Navigation_Status = navigation_status
@@ -18,6 +18,7 @@ class Ships:
         self.Type = type
         self.Embarkation = Embarkation
         self.Destination = Destination
+        self.Capacity = capacity
 
     @classmethod
     def change_condition(cls, condition):
@@ -30,35 +31,60 @@ class Ships:
     def update_speed(self):
         self.speed = random.randint(25, 30)
 
-# Function to update speed
-def update_speed(name_of_ship):
-    name_of_ship.update_speed()
 
-# ---------------------GUI-------------------
+
+# ------------------------------------------GUI-------------------------------------------
 root = Tk()
 width, height = root.winfo_screenwidth(), root.winfo_screenheight()
 root.geometry('%dx%d+0+0' % (width,height))
 root.resizable(False,False)
 root.configure(bg='white')
 
+frame1 = Frame(root, width=width, height=height)
+frame1.pack(fill=BOTH, expand=True)
+
+
 background_img = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\loginphoto.jpg")
 background_img = background_img.resize((root.winfo_screenwidth(),root.winfo_screenheight()))
 background_tkimg = ImageTk.PhotoImage(background_img)
 
-bglabel = Label(root, image=background_tkimg)
+bglabel = Label(frame1, image=background_tkimg)
 bglabel.place(x=0, y=0)
 
 mydata = connector.connect(host='localhost', user='root', password='nakuldesai2510', database='vtms')
 csor = mydata.cursor()
 
 
+
+
 # ---------------------------------------------Data Showing-------------------------------------------
-frame = Frame(root, width=500, height=1000)
+frame = Frame(frame1, width=500, height=1000)
 frame.pack(expand=True)
 
 frame.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-# -----------------------------------------Treeview------------------------------------
+# Button To see data
+btn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\photos\search.png")
+
+def ship_info_detail():
+    frame1.destroy()
+
+    frame2 = Frame(root, width= width, height= height)
+    frame2.pack(expand=True, fill=BOTH)
+
+    bglabel = Label(frame2, image=background_tkimg)
+    bglabel.place(x=0, y=0)
+
+    
+
+
+
+
+show_info = Button(frame1, image=btn_img, command=ship_info_detail, borderwidth=0, bd=0)
+show_info.pack(side=BOTTOM, anchor=SW, padx=10, pady=40)
+
+
+# -----------------------------Treeview------------------------------------
 # Style
 style = ttk.Style()
 
@@ -92,13 +118,14 @@ my_tree.pack()
 tree_scroll.config(command=my_tree.yview)
 
 # Defining Columns
-my_tree['columns'] = ('Name', 'Type', 'IMO', 'Condition', 'Navigation Status', 'Embarkation', 'Destination')
+my_tree['columns'] = ('Name', 'Type', 'IMO','Capacity','Condition' ,'Navigation Status', 'Embarkation', 'Destination')
 
 # Formating Columns
 my_tree.column('#0', width=0, stretch=NO)
 my_tree.column('Name', anchor=CENTER, width=140)
 my_tree.column('Type', anchor=CENTER, width=140)
 my_tree.column('IMO', anchor=CENTER, width=100)
+my_tree.column('Capacity', anchor=CENTER, width=100)
 my_tree.column('Condition', anchor=CENTER, width=140)
 my_tree.column('Navigation Status', anchor=CENTER, width=140)
 my_tree.column('Embarkation', anchor=CENTER, width=140)
@@ -110,6 +137,7 @@ my_tree.heading('#0', text='', anchor=W)
 my_tree.heading('Name', text='Name', anchor=CENTER)
 my_tree.heading('Type', text='Type', anchor=CENTER)
 my_tree.heading('IMO', text='IMO', anchor=CENTER)
+my_tree.heading('Capacity', text='Capacity', anchor=CENTER)
 my_tree.heading('Condition', text='Condition', anchor=CENTER)
 my_tree.heading('Navigation Status', text='Navigation Status', anchor=CENTER)
 my_tree.heading('Embarkation', text='Embarkation', anchor=CENTER)
@@ -130,11 +158,11 @@ count = 0
 for record in data:
     if count%2 == 0:
         my_tree.insert(parent='', index='end', iid=count, text='', 
-                       values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6]), 
+                       values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7]), 
                        tags=('evenrow',))
     else:
         my_tree.insert(parent='', index='end', iid=count, text='', 
-                       values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6]), 
+                       values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7]), 
                        tags=('oddrow',))
     count += 1
 
@@ -160,6 +188,12 @@ imo_label = Label(data_frame, text='IMO')
 imo_label.grid(row=0, column=4, padx=10, pady=10)
 imo_entry = Entry(data_frame)
 imo_entry.grid(row=0, column=5, padx=10, pady=10)
+
+# imo Label and Entry
+capacity_label = Label(data_frame, text='Capacity')
+capacity_label.grid(row=0, column=4, padx=10, pady=10)
+capacity_entry = Entry(data_frame)
+capacity_entry.grid(row=0, column=5, padx=10, pady=10)
 
 # condition Label and Entry
 condition_label = Label(data_frame, text='Condition')
@@ -192,6 +226,7 @@ def clear_entries():
     n_entry.delete(0, END)
     type_entry.delete(0, END)
     imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
     condition_entry.delete(0, END)
     navigation_status_entry.delete(0, END)
     embarkation_entry.delete(0, END)
@@ -204,6 +239,7 @@ def select_record(e):
     n_entry.delete(0, END)
     type_entry.delete(0, END)
     imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
     condition_entry.delete(0, END)
     navigation_status_entry.delete(0, END)
     embarkation_entry.delete(0, END)
@@ -218,43 +254,49 @@ def select_record(e):
     n_entry.insert(0, values[0])
     type_entry.insert(0, values[1])
     imo_entry.insert(0, values[2])
-    condition_entry.insert(0, values[3])
-    navigation_status_entry.insert(0, values[4])
-    embarkation_entry.insert(0, values[5])
-    destination_entry.insert(0, values[6])
+    capacity_entry.insert(0, values[3])
+    condition_entry.insert(0, values[4])
+    navigation_status_entry.insert(0, values[5])
+    embarkation_entry.insert(0, values[6])
+    destination_entry.insert(0, values[7])
 
 def add_record():
     global count
+
+    count += 1
+
     if count%2==0:
         my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
-            n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
+            n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
         ), tags=('evenrow'))
     else:
         my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
-            n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
+            n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
         ), tags=('oddrow'))
 
     # Create a Ships instance for the newly added record
     new_ship = Ships(
         name=n_entry.get(), 
-        IMO_Number=imo_entry.get(), 
-        condition=condition_entry.get(), 
+        IMO_Number=imo_entry.get(),
+        capacity=capacity_entry.get(), 
+        condition=condition_entry.get(),
         navigation_status=navigation_status_entry.get(), 
         type=type_entry.get(), 
         Embarkation=embarkation_entry.get(), 
         Destination=destination_entry.get()
     )
+
+    new_ship.update_speed()
     
     # MySQL
-    csor.execute("insert into SHIPDATA values('{}', '{}', {}, '{}', '{}', '{}', {})".
-                 format(n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()))
+    csor.execute("insert into SHIPDATA values('{}', '{}', {}, '{}', '{}', '{}', '{}')".
+                 format(n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()))
     mydata.commit()
-
-    count += 1
     
     n_entry.delete(0, END)
     type_entry.delete(0, END)
     imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
     condition_entry.delete(0, END)
     navigation_status_entry.delete(0, END)
     embarkation_entry.delete(0, END)
@@ -264,18 +306,41 @@ def update_record():
     selected = my_tree.focus()
 
     my_tree.item(selected, text='', values=(
-            n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
+            n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
         ))
     
     # MySQL
     record_imo = my_tree.item(selected)['values'][1]
-    csor.execute("UPDATE SHIPDATA SET name = ('{}'), last_name = ('{}'), imo = ({}), condition = ('{}'), Navigation Status = ('{}'), Embarkation = ('{}'), Destination = ('{}') WHERE imo = ({})".
-                 format(n_entry.get(),type_entry.get() ,imo_entry.get(), condition_entry.get(),navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get() ,imo_entry.get()))
+    
+    csor.execute("""
+        UPDATE SHIPDATA 
+        SET Name = '{}', 
+            TYPE = '{}', 
+            IMO = {},
+            Capacity = {},
+            `Condition` = '{}', 
+            Navigation_Status = '{}', 
+            Embarkation = '{}', 
+            Departure = '{}' 
+        WHERE IMO = {}
+        """.format(
+            n_entry.get(), 
+            type_entry.get(), 
+            imo_entry.get(), 
+            capacity_entry.get(),
+            condition_entry.get(), 
+            navigation_status_entry.get(), 
+            embarkation_entry.get(), 
+            destination_entry.get(), 
+            my_tree.item(selected)['values'][2]  # Assuming 'IMO' is at index 2
+        )
+    )
     mydata.commit()
     
     n_entry.delete(0, END)
     type_entry.delete(0, END)
     imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
     condition_entry.delete(0, END)
     navigation_status_entry.delete(0, END)
     embarkation_entry.delete(0, END)
@@ -284,22 +349,53 @@ def update_record():
 
 # Remove One Selected
 def remove_one():
+
+    csor.execute(f"DELETE FROM SHIPDATA WHERE IMO = {imo_entry.get()}")
+    mydata.commit()
+
     x = my_tree.selection()[0]
     my_tree.delete(x)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
 
 # Remove Selected
 def remove_selected():
     x = my_tree.selection()
     for record in x:
-        record_imo = my_tree.item(record)['values'][1]
-        # csor.execute('DELETE FROM SHIPDATA where imo = ({})'.format(record_imo))
-        # mydata.commit()
+        record_imo = my_tree.item(record)['values'][2]
+        csor.execute('DELETE FROM SHIPDATA where imo = ({})'.format(record_imo))
+        mydata.commit()
         my_tree.delete(record)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
 
 # Remove All Record
 def remove_all_record():
+    # Remove all records from the MySQL table
+    csor.execute('DELETE FROM SHIPDATA')
+    mydata.commit()
     for record in my_tree.get_children():
         my_tree.delete(record)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    capacity_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
 
 # Move Up
 def up():
@@ -344,7 +440,6 @@ move_down_button.grid(row=0, column=6, padx=10, pady=10)
 
 clear_entries_button = Button(button_frame, text='Clear Entries', command=clear_entries)
 clear_entries_button.grid(row=0, column=7, padx=10, pady=10)
-
 
 # ------------Binding-----------
 my_tree.bind("<ButtonRelease-1>", select_record)
