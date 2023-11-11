@@ -5,6 +5,35 @@ from PIL import ImageTk, Image
 import random
 import mysql.connector as connector
 
+
+# -----------------------------------------------Ships-------------------------------------------------
+class Ships:
+    speed = 0
+    # IMO Number = The International Maritime Organization (IMO) number uniquely identifies each seagoing ship. It is an important reference for tracking and managing vessels.
+    def __init__(self, name, IMO_Number ,condition, navigation_status, type, Embarkation, Destination):
+        self.Name = name
+        self.Condition = condition
+        self.Navigation_Status = navigation_status
+        self.IMO_Number = IMO_Number
+        self.Type = type
+        self.Embarkation = Embarkation
+        self.Destination = Destination
+
+    @classmethod
+    def change_condition(cls, condition):
+        cls.condition = condition
+    
+    @classmethod
+    def change_navigation_status(cls, navigation_status):
+        cls.navigation_status = navigation_status
+
+    def update_speed(self):
+        self.speed = random.randint(25, 30)
+
+# Function to update speed
+def update_speed(name_of_ship):
+    name_of_ship.update_speed()
+
 # ---------------------GUI-------------------
 root = Tk()
 width, height = root.winfo_screenwidth(), root.winfo_screenheight()
@@ -19,7 +48,7 @@ background_tkimg = ImageTk.PhotoImage(background_img)
 bglabel = Label(root, image=background_tkimg)
 bglabel.place(x=0, y=0)
 
-mydata = connector.connect(host='localhost', user='root', password='nakuldesai2510', database='CRM_tool')
+mydata = connector.connect(host='localhost', user='root', password='nakuldesai2510', database='vtms')
 csor = mydata.cursor()
 
 
@@ -63,57 +92,32 @@ my_tree.pack()
 tree_scroll.config(command=my_tree.yview)
 
 # Defining Columns
-my_tree['columns'] = ('First Name', 'Last Name', 'ID', 'Address', 'City', 'State', 'Zipcode')
+my_tree['columns'] = ('Name', 'Type', 'IMO', 'Condition', 'Navigation Status', 'Embarkation', 'Destination')
 
 # Formating Columns
 my_tree.column('#0', width=0, stretch=NO)
-my_tree.column('First Name', anchor=CENTER, width=140)
-my_tree.column('Last Name', anchor=CENTER, width=140)
-my_tree.column('ID', anchor=CENTER, width=100)
-my_tree.column('Address', anchor=CENTER, width=140)
-my_tree.column('City', anchor=CENTER, width=140)
-my_tree.column('State', anchor=CENTER, width=140)
-my_tree.column('Zipcode', anchor=CENTER, width=140)
+my_tree.column('Name', anchor=CENTER, width=140)
+my_tree.column('Type', anchor=CENTER, width=140)
+my_tree.column('IMO', anchor=CENTER, width=100)
+my_tree.column('Condition', anchor=CENTER, width=140)
+my_tree.column('Navigation Status', anchor=CENTER, width=140)
+my_tree.column('Embarkation', anchor=CENTER, width=140)
+my_tree.column('Destination', anchor=CENTER, width=140)
 
 
 # Creating Heading
 my_tree.heading('#0', text='', anchor=W)
-my_tree.heading('First Name', text='First Name', anchor=CENTER)
-my_tree.heading('Last Name', text='Last Name', anchor=CENTER)
-my_tree.heading('ID', text='ID', anchor=CENTER)
-my_tree.heading('Address', text='Address', anchor=CENTER)
-my_tree.heading('City', text='City', anchor=CENTER)
-my_tree.heading('State', text='State', anchor=CENTER)
-my_tree.heading('Zipcode', text='Zipcode', anchor=CENTER)
-
-
-# ------------------------------------Fake Data---------------------------------------
-# data = [
-# 	["John", "Elder", 1, "123 Elder St.", "Las Vegas", "NV", "89137"],
-# 	["Mary", "Smith", 2, "435 West Lookout", "Chicago", "IL", "60610"],
-# 	["Tim", "Tanaka", 3, "246 Main St.", "New York", "NY", "12345"],
-# 	["Erin", "Erinton", 4, "333 Top Way.", "Los Angeles", "CA", "90210"],
-# 	["Bob", "Bobberly", 5, "876 Left St.", "Memphis", "TN", "34321"],
-# 	["Steve", "Smith", 6, "1234 Main St.", "Miami", "FL", "12321"],
-# 	["Tina", "Browne", 7, "654 Street Ave.", "Chicago", "IL", "60611"],
-# 	["Mark", "Lane", 8, "12 East St.", "Nashville", "TN", "54345"],
-# 	["John", "Smith", 9, "678 North Ave.", "St. Louis", "MO", "67821"],
-# 	["Mary", "Todd", 10, "9 Elder Way.", "Dallas", "TX", "88948"],
-# 	["John", "Lincoln", 11, "123 Elder St.", "Las Vegas", "NV", "89137"],
-# 	["Mary", "Bush", 12, "435 West Lookout", "Chicago", "IL", "60610"],
-# 	["Tim", "Reagan", 13, "246 Main St.", "New York", "NY", "12345"],
-# 	["Erin", "Smith", 14, "333 Top Way.", "Los Angeles", "CA", "90210"],
-# 	["Bob", "Field", 15, "876 Left St.", "Memphis", "TN", "34321"],
-# 	["Steve", "Target", 16, "1234 Main St.", "Miami", "FL", "12321"],
-# 	["Tina", "Walton", 17, "654 Street Ave.", "Chicago", "IL", "60611"],
-# 	["Mark", "Erendale", 18, "12 East St.", "Nashville", "TN", "54345"],
-# 	["John", "Nowerton", 19, "678 North Ave.", "St. Louis", "MO", "67821"],
-# 	["Mary", "Hornblower", 20, "9 Elder Way.", "Dallas", "TX", "88948"]
-# ]
+my_tree.heading('Name', text='Name', anchor=CENTER)
+my_tree.heading('Type', text='Type', anchor=CENTER)
+my_tree.heading('IMO', text='IMO', anchor=CENTER)
+my_tree.heading('Condition', text='Condition', anchor=CENTER)
+my_tree.heading('Navigation Status', text='Navigation Status', anchor=CENTER)
+my_tree.heading('Embarkation', text='Embarkation', anchor=CENTER)
+my_tree.heading('Destination', text='Destination', anchor=CENTER)
 
 
 # -------------------------------REAL DATA------------------------------
-csor.execute('select * from CRM')
+csor.execute('select * from SHIPDATA')
 data=csor.fetchall()
 
 # Creating Striped Row Tags
@@ -139,71 +143,71 @@ for record in data:
 data_frame = LabelFrame(frame, text='Record')
 data_frame.pack(fill='x', expand='yes', padx=20)
 
-# First Name Label and Entry
-fn_label = Label(data_frame, text='First Name')
-fn_label.grid(row=0, column=0, padx=10, pady=10)
-fn_entry = Entry(data_frame)
-fn_entry.grid(row=0, column=1, padx=10, pady=10)
+# Name Label and Entry
+n_label = Label(data_frame, text='Name')
+n_label.grid(row=0, column=0, padx=10, pady=10)
+n_entry = Entry(data_frame)
+n_entry.grid(row=0, column=1, padx=10, pady=10)
 
-# Last Name Label and Entry
-ln_label = Label(data_frame, text='Last Name')
-ln_label.grid(row=0, column=2, padx=10, pady=10)
-ln_entry = Entry(data_frame)
-ln_entry.grid(row=0, column=3, padx=10, pady=10)
+# Type Label and Entry
+type_label = Label(data_frame, text='Type')
+type_label.grid(row=0, column=2, padx=10, pady=10)
+type_entry = Entry(data_frame)
+type_entry.grid(row=0, column=3, padx=10, pady=10)
 
-# ID Label and Entry
-id_label = Label(data_frame, text='ID')
-id_label.grid(row=0, column=4, padx=10, pady=10)
-id_entry = Entry(data_frame)
-id_entry.grid(row=0, column=5, padx=10, pady=10)
+# imo Label and Entry
+imo_label = Label(data_frame, text='IMO')
+imo_label.grid(row=0, column=4, padx=10, pady=10)
+imo_entry = Entry(data_frame)
+imo_entry.grid(row=0, column=5, padx=10, pady=10)
 
-# Address Label and Entry
-address_label = Label(data_frame, text='Address')
-address_label.grid(row=1, column=0, padx=10, pady=10)
-address_entry = Entry(data_frame)
-address_entry.grid(row=1, column=1, padx=10, pady=10)
+# condition Label and Entry
+condition_label = Label(data_frame, text='Condition')
+condition_label.grid(row=1, column=0, padx=10, pady=10)
+condition_entry = Entry(data_frame)
+condition_entry.grid(row=1, column=1, padx=10, pady=10)
 
-# City Label and Entry
-city_label = Label(data_frame, text='City')
-city_label.grid(row=1, column=2, padx=10, pady=10)
-city_entry = Entry(data_frame)
-city_entry.grid(row=1, column=3, padx=10, pady=10)
+# Navigation Status Label and Entry
+navigation_status_label = Label(data_frame, text='Navigation Status')
+navigation_status_label.grid(row=1, column=2, padx=10, pady=10)
+navigation_status_entry = Entry(data_frame)
+navigation_status_entry.grid(row=1, column=3, padx=10, pady=10)
 
-# State Label and Entry
-state_label = Label(data_frame, text='State')
-state_label.grid(row=1, column=4, padx=10, pady=10)
-state_entry = Entry(data_frame)
-state_entry.grid(row=1, column=5, padx=10, pady=10)
+# Embarkation Label and Entry
+embarkation_label = Label(data_frame, text='Embarkation')
+embarkation_label.grid(row=1, column=4, padx=10, pady=10)
+embarkation_entry = Entry(data_frame)
+embarkation_entry.grid(row=1, column=5, padx=10, pady=10)
 
-# ZipCode Label and Entry
-zipcode_label = Label(data_frame, text='Zipcode')
-zipcode_label.grid(row=1, column=6, padx=10, pady=10)
-zipcode_entry = Entry(data_frame)
-zipcode_entry.grid(row=1, column=7, padx=10, pady=10)
+# Destination Label and Entry
+destination_label = Label(data_frame, text='Destination')
+destination_label.grid(row=1, column=6, padx=10, pady=10)
+destination_entry = Entry(data_frame)
+destination_entry.grid(row=1, column=7, padx=10, pady=10)
 
 # --------------Functions------------------
 # Clear Entries
 def clear_entries():
     # Clearing Entry Boxes
-    fn_entry.delete(0, END)
-    ln_entry.delete(0, END)
-    id_entry.delete(0, END)
-    address_entry.delete(0, END)
-    city_entry.delete(0, END)
-    state_entry.delete(0, END)
-    zipcode_entry.delete(0, END)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
 
 
 # Select Records
 def select_record(e):
     # Clearing Entry Boxes
-    fn_entry.delete(0, END)
-    ln_entry.delete(0, END)
-    id_entry.delete(0, END)
-    address_entry.delete(0, END)
-    city_entry.delete(0, END)
-    state_entry.delete(0, END)
-    zipcode_entry.delete(0, END)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
 
     # Grabing selected record(number to be precise)
     selected = my_tree.focus()
@@ -211,60 +215,71 @@ def select_record(e):
     values = my_tree.item(selected, 'values')
 
     # Inserting Values
-    fn_entry.insert(0, values[0])
-    ln_entry.insert(0, values[1])
-    id_entry.insert(0, values[2])
-    address_entry.insert(0, values[3])
-    city_entry.insert(0, values[4])
-    state_entry.insert(0, values[5])
-    zipcode_entry.insert(0, values[6])
+    n_entry.insert(0, values[0])
+    type_entry.insert(0, values[1])
+    imo_entry.insert(0, values[2])
+    condition_entry.insert(0, values[3])
+    navigation_status_entry.insert(0, values[4])
+    embarkation_entry.insert(0, values[5])
+    destination_entry.insert(0, values[6])
 
 def add_record():
     global count
     if count%2==0:
         my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
-            fn_entry.get(), ln_entry.get(), id_entry.get(), address_entry.get(), city_entry.get(), state_entry.get(), zipcode_entry.get()
+            n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
         ), tags=('evenrow'))
     else:
         my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
-            fn_entry.get(), ln_entry.get(), id_entry.get(), address_entry.get(), city_entry.get(), state_entry.get(), zipcode_entry.get()
+            n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
         ), tags=('oddrow'))
+
+    # Create a Ships instance for the newly added record
+    new_ship = Ships(
+        name=n_entry.get(), 
+        IMO_Number=imo_entry.get(), 
+        condition=condition_entry.get(), 
+        navigation_status=navigation_status_entry.get(), 
+        type=type_entry.get(), 
+        Embarkation=embarkation_entry.get(), 
+        Destination=destination_entry.get()
+    )
     
     # MySQL
-    csor.execute("insert into CRM values('{}', '{}', {}, '{}', '{}', '{}', {})".
-                 format(fn_entry.get(), ln_entry.get(), id_entry.get(), address_entry.get(), city_entry.get(), state_entry.get(), zipcode_entry.get()))
+    csor.execute("insert into SHIPDATA values('{}', '{}', {}, '{}', '{}', '{}', {})".
+                 format(n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()))
     mydata.commit()
 
     count += 1
     
-    fn_entry.delete(0, END)
-    ln_entry.delete(0, END)
-    id_entry.delete(0, END)
-    address_entry.delete(0, END)
-    city_entry.delete(0, END)
-    state_entry.delete(0, END)
-    zipcode_entry.delete(0, END)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
 
 def update_record():
     selected = my_tree.focus()
 
     my_tree.item(selected, text='', values=(
-            fn_entry.get(), ln_entry.get(), id_entry.get(), address_entry.get(), city_entry.get(), state_entry.get(), zipcode_entry.get()
+            n_entry.get(), type_entry.get(), imo_entry.get(), condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get()
         ))
     
     # MySQL
-    record_id = my_tree.item(selected)['values'][1]
-    csor.execute("UPDATE CRM SET first_name = ('{}'), last_name = ('{}'),id = ({}), address = ('{}'), city = ('{}'), state = ('{}'), zipcode = ('{}') WHERE id = ({})".
-                 format(fn_entry.get(),ln_entry.get() ,id_entry.get(), address_entry.get(),city_entry.get(), state_entry.get(), zipcode_entry.get() ,record_id))
+    record_imo = my_tree.item(selected)['values'][1]
+    csor.execute("UPDATE SHIPDATA SET name = ('{}'), last_name = ('{}'), imo = ({}), condition = ('{}'), Navigation Status = ('{}'), Embarkation = ('{}'), Destination = ('{}') WHERE imo = ({})".
+                 format(n_entry.get(),type_entry.get() ,imo_entry.get(), condition_entry.get(),navigation_status_entry.get(), embarkation_entry.get(), destination_entry.get() ,imo_entry.get()))
     mydata.commit()
     
-    fn_entry.delete(0, END)
-    ln_entry.delete(0, END)
-    id_entry.delete(0, END)
-    address_entry.delete(0, END)
-    city_entry.delete(0, END)
-    state_entry.delete(0, END)
-    zipcode_entry.delete(0, END)
+    n_entry.delete(0, END)
+    type_entry.delete(0, END)
+    imo_entry.delete(0, END)
+    condition_entry.delete(0, END)
+    navigation_status_entry.delete(0, END)
+    embarkation_entry.delete(0, END)
+    destination_entry.delete(0, END)
     
 
 # Remove One Selected
@@ -276,8 +291,8 @@ def remove_one():
 def remove_selected():
     x = my_tree.selection()
     for record in x:
-        record_id = my_tree.item(record)['values'][1]
-        # csor.execute('DELETE FROM part1 where id = ({})'.format(record_id))
+        record_imo = my_tree.item(record)['values'][1]
+        # csor.execute('DELETE FROM SHIPDATA where imo = ({})'.format(record_imo))
         # mydata.commit()
         my_tree.delete(record)
 
@@ -333,43 +348,6 @@ clear_entries_button.grid(row=0, column=7, padx=10, pady=10)
 
 # ------------Binding-----------
 my_tree.bind("<ButtonRelease-1>", select_record)
-
-# -----------------------------------------------Ships-------------------------------------------------
-class Ships:
-    speed = 0
-    # IMO Number = The International Maritime Organization (IMO) number uniquely identifies each seagoing ship. It is an important reference for tracking and managing vessels.
-    def __init__(self, name, IMO_Number ,condition, navigation_status, type, Embarkation, Destination):
-        self.Name = name
-        self.Condition = condition
-        self.Navigation_Status = navigation_status
-        self.IMO_Number = IMO_Number
-        self.Type = type
-        self.Embarkation = Embarkation
-        self.Destination = Destination
-
-    @classmethod
-    def change_condition(cls, condition):
-        cls.condition = condition
-    
-    @classmethod
-    def change_navigation_status(cls, navigation_status):
-        cls.navigation_status = navigation_status
-
-    def update_speed(self):
-        self.speed = random.randint(25, 30)
-
-# Function to update speed
-def update_speed(name_of_ship):
-    name_of_ship.update_speed()
-
-Ship1 = Ships(name='Nakul', IMO_Number='134976143', condition='Good', navigation_status='On Going', type='abc'
-              , Embarkation='BOM', Destination='Chennai')
-
-print(Ship1.__dict__)
-print(Ship1.speed)
-
-Ship1.update_speed()
-print(Ship1.speed)
 
 # --------------------End-------------------
 root.mainloop()
