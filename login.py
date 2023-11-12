@@ -49,26 +49,18 @@ heading.place(x=100, y=5)
 # Sign In
 def signin():
     username = user_name.get()
-    password = pass_word.get()
-
-    print(username)
-    print(password)
-
-    if 'admin' in username:
-        # Verify admin credentials
-        if verify_admin(username, password):
-            messagebox.showinfo("Login Successful", "Admin login successful!")
-            # Call admin menu function
-        else:
-            messagebox.showerror("Login Failed", "Invalid username or password.")
+    password = password.get()
+    # Verify admin credentials
+    if verify_admin(username, password):
+        messagebox.showinfo("Login Successful", "Admin login successful!")
+        # Call admin menu function
     # Verify supplier credentials
+    elif verify_supplier(username, password):
+        messagebox.showinfo("Login Successful", "Supplier login successful!")
+        # Call supplier menu function
+        supplier_menu(username)
     else:
-        if verify_supplier(username, password):
-            messagebox.showinfo("Login Successful", "Supplier login successful!")
-            # Call supplier menu function
-            supplier_menu(username)
-        else:
-            messagebox.showerror("Login Failed", "Invalid username or password.")
+        messagebox.showerror("Login Failed", "Invalid username or password.")
 
 
 # Admin login verification
@@ -80,9 +72,6 @@ def verify_admin(username, password):
     result = cursor.fetchone()
     db.close()
     return result is not None
-
-def admin_menu():
-    pass
 
 # Supplier login verification
 def verify_supplier(username, password):
@@ -119,17 +108,17 @@ Frame(frame, width = 295, height=2, bg='black').place(x=25, y=107)
 # Password
 
 def on_enter1():
-    pass_word.delete(0, 'end')
+    password.delete(0, 'end')
 def on_leave1():
-    name = pass_word.get()
+    name = password.get()
     if name == '':
-        pass_word.insert(0, 'Password')
+        password.insert(0, 'Password')
 
-pass_word = Entry(frame, width=25, fg='black', border = 0, bg='white', font=('Microsoft Yahei UI Light', 11))
-pass_word.place(x=30, y=150)
-pass_word.insert(0, 'Password')
-pass_word.bind('<FocusIn>', on_enter1)
-pass_word.bind('<FocusOut>', on_leave1)
+password = Entry(frame, width=25, fg='black', border = 0, bg='white', font=('Microsoft Yahei UI Light', 11))
+password.place(x=30, y=150)
+password.insert(0, 'Password')
+password.bind('<FocusIn>', on_enter1)
+password.bind('<FocusOut>', on_leave1)
 
 Frame(frame, width=295, height=2, border=0, bg='black').place(x=25, y=177)
 
