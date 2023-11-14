@@ -1,24 +1,17 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QUrl
+from tkinter import *
+from tkintermapview import TkinterMapView
 
-class MapApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
+root = Tk()
+root.geometry('500x500')
+root.title('Google Map View')
 
-        self.setWindowTitle("Map App")
-        self.setGeometry(100, 100, 800, 600)
+# Map Inside Window
+map_widget = TkinterMapView(root, width=600, height=400
+                            ,corner_radius=0)
+map_widget.pack(fill='both', expand=True)
 
-        # Create QWebEngineView
-        self.web_view = QWebEngineView()
-        self.setCentralWidget(self.web_view)
+# Google Url
+# map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
 
-        # Load HTML file
-        self.web_view.setUrl(QUrl.fromLocalFile(r"E:\Project CS\Vessel Traffic Management System\GUI\map.html"))
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MapApp()
-    window.show()
-    sys.exit(app.exec_())
+root.mainloop()

@@ -11,3 +11,7 @@ Admin:-
 --> Accept or Decline user requests.
 --> Show ships routes.
 --> Delay arrival or disembark of ships.
+
+
+
+INSERT INTO SHIPDATA VALUES ('Nakul','Cargo',1234567,100000,'Good','DOCKED','CHN','2008-11-11 15:00','BOM','2008-11-11 19:00',LOAD_FILE(r"E:/Project CS/Vessel Traffic Management System/new_image.png"));
