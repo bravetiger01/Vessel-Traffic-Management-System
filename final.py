@@ -52,7 +52,6 @@ root = Tk()
 width, height = root.winfo_screenwidth(), root.winfo_screenheight()
 root.title('Vessel Traffic Managment System')
 root.geometry('%dx%d+0+0' % (width,height))
-root.resizable(False,False)
 root.configure(bg='white')
 
 # -------------------Designing----------------
@@ -69,8 +68,7 @@ background_tkimg = ImageTk.PhotoImage(background_img)
 
 
 
-# -------------Background---------------
-# Backgound Image
+# -----------------------------------------------------------------SIGN IN WINDOW---------------------------------------------------------
 def signin_window():
     global signin_frame, user_name, pass_word
     signin_frame = Frame(root, width=width, height=height)
@@ -90,6 +88,7 @@ def signin_window():
     def on_enter1(e):
         global pass_word
         pass_word.delete(0, 'end')
+        pass_word.config(show='*')
     def on_leave1(e):
         global pass_word
         name = pass_word.get()
@@ -162,37 +161,39 @@ def signin_window():
                 pass
         else:
             return result is None
-        
-    pass_word = Entry(frame, width=25, fg='black', border = 0, bg='white', font=('Microsoft Yahei UI Light', 11))
+    
+    def show_password():
+        if pass_word.cget('show') == '*':
+            pass_word.config(show='')
+        else:
+            pass_word.config(show='*')
+    
+    pass_word = Entry(frame,width=25,show='*',fg='black',border = 0,bg='white',font=('Microsoft Yahei UI Light', 11))
     pass_word.place(x=30, y=150)
     pass_word.insert(0, 'Password')
+    if pass_word.get()== 'Password':
+        pass_word.config(show='')
+    else:
+        pass_word.config(show='*')
     pass_word.bind('<FocusIn>', on_enter1)
     pass_word.bind('<FocusOut>', on_leave1)
+
+    check_button = Checkbutton(frame, text='Show Password', command=show_password)
+    check_button.place(x=25, y=200)
+    
 
     user_name = Entry(frame, width=25, fg='black',border=0 , bg='white', font=('Microsoft Yahei UI Light', 11))
     user_name.place(x=30, y=80)
     user_name.insert(0, 'Username')
     user_name.bind('<FocusIn>', on_enter)
     user_name.bind('<FocusOut>', on_leave)
-        
-    
-
-    
-    
 
     Frame(frame, width = 295, height=2, bg='black').place(x=25, y=107)
-
     # Password
-
-    
-    
-
     Frame(frame, width=295, height=2, border=0, bg='black').place(x=25, y=177)
 
-
-
     # Button
-    Button(frame, width=39, pady=7, text='Sign In', command=signin, bg ='#57a1f8', fg= 'white', border=0).place(x=35, y=204)
+    Button(frame, width=39, pady=7, text='Sign In', command=signin, bg ='#57a1f8', fg= 'white', border=0).place(x=35, y=300)
 
 # -------------------------------Supplier------------------------------
 def supplier_menu():
@@ -570,6 +571,10 @@ def admin_menu():
                 departure_datetime = datetime.strptime(departure_datetime_str, '%Y-%m-%d %H:%M')
                 arrival_datetime = datetime.strptime(arrival_datetime_str, '%Y-%m-%d %H:%M')
 
+                if arrival_datetime <= departure_datetime:
+                    messagebox.showwarning('Warning!!', "Arrival Time can't be equal to or less than Departure Time!!!!!")
+                    return
+
                 if count%2==0:
                     my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
                         n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime, image_path_entry.get()
@@ -640,6 +645,10 @@ def admin_menu():
                 arrival_datetime = datetime.combine(arrival_date, arrival_time)
 
                 arrival_datetime = datetime.combine(arrival_date, arrival_time)
+
+                if arrival_datetime <= departure_datetime:
+                    messagebox.showerror("Error", "Arrival time must be greater than departure time.")
+                    return 
 
                 my_tree.item(selected, text='', values=(
                         n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(),departure_datetime ,destination_entry.get(), arrival_datetime, image_path_entry.get()
@@ -820,7 +829,7 @@ def admin_menu():
     # Start the background thread
     check_and_update_navigation_status()
 
-    def  display_ship_details(ship_name,ship_type,imo_number,capacity,condition,navigation_status,embarkation,arrivaltime,destination,destinationtime,imagepath):
+    def  display_ship_details(ship_name,ship_type,imo_number,capacity,condition,navigation_status,embarkation,departuretime,destination,arrivaltime,imagepath):
         global detail_frame
         detail_frame = Frame(root, width=1200, height=600, bg='#161f1e')
         detail_frame.place(relx=0.5, rely=0.5, anchor=CENTER)
@@ -829,7 +838,7 @@ def admin_menu():
         toplabel = CTkLabel(master=detail_frame)
         toplabel.grid(row=0, column=0, padx=13, pady=15)
 
-        ship_name_label = CTkLabel(toplabel, text=f"Name: {ship_name}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 20))
+        ship_name_label = CTkLabel(toplabel, text=f"Name: {ship_name}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 20), corner_radius=5)
         ship_name_label.grid(row=1, column=0, pady=10, padx=20)
 
         imageframe = CTkFrame(toplabel, width=width//2, height=height//2)
@@ -839,32 +848,38 @@ def admin_menu():
         background_img = background_img.resize((500, 500))
         background_tkimg = ImageTk.PhotoImage(background_img)
 
-        imagelabel = CTkLabel(imageframe, image=background_tkimg)
-        imagelabel.grid(row=0, column=1, padx=20, pady=20)
+        imagelabel = CTkLabel(imageframe,text='' ,image=background_tkimg)
+        imagelabel.grid(row=0, column=1)
 
         otherdetaillabel = CTkLabel(master=detail_frame)
         otherdetaillabel.grid(row=1, column=0, padx=13, pady=15)
 
-        ship_type_label = CTkLabel(otherdetaillabel, text=f"Type: {ship_type}", bg_color='#161f1e',fg_color='#4d81c9')
+        ship_type_label = CTkLabel(otherdetaillabel, text=f"Type: {ship_type}", bg_color='#161f1e',fg_color='#4d81c9', corner_radius=5)
         ship_type_label.grid(row=0, column=0, pady=10, padx=13)
 
-        imo_label = CTkLabel(otherdetaillabel, text=f"IMO: {imo_number}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14))
+        imo_label = CTkLabel(otherdetaillabel, text=f"IMO: {imo_number}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         imo_label.grid(row=0, column=1, pady=10, padx=13)
 
-        capacity_label = CTkLabel(otherdetaillabel, text=f"Capacity: {capacity}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14))
+        capacity_label = CTkLabel(otherdetaillabel, text=f"Capacity: {capacity}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         capacity_label.grid(row=0, column=2, pady=10, padx=13)
 
-        condition_label = CTkLabel(otherdetaillabel, text=f"Condition: {condition}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14))
+        condition_label = CTkLabel(otherdetaillabel, text=f"Condition: {condition}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         condition_label.grid(row=1, column=0, pady=10, padx=13)
 
-        navigation_status_label = CTkLabel(otherdetaillabel, text=f"Navigation Status: {navigation_status}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14))
+        navigation_status_label = CTkLabel(otherdetaillabel, text=f"Navigation Status: {navigation_status}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         navigation_status_label.grid(row=1, column=1, pady=10, padx=13)
 
-        embarkation_label = CTkLabel(otherdetaillabel, text=f"Embarkation: {embarkation}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14))
+        embarkation_label = CTkLabel(otherdetaillabel, text=f"Embarkation: {embarkation}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         embarkation_label.grid(row=1, column=2, pady=10, padx=13)
 
-        destination_label = CTkLabel(otherdetaillabel, text=f"Destination: {destination}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14))
+        departure_time_label = CTkLabel(otherdetaillabel, text=f"Departure Time: {departuretime}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
+        departure_time_label.grid(row=1, column=2, pady=10, padx=13)
+
+        destination_label = CTkLabel(otherdetaillabel, text=f"Destination: {destination}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         destination_label.grid(row=2, column=0, pady=10, padx=13)
+
+        arrival_time_label = CTkLabel(otherdetaillabel, text=f"Arrival Time: {arrivaltime}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
+        arrival_time_label.grid(row=2, column=0, pady=10, padx=13)
 
 
     def ship_info_detail():

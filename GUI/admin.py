@@ -7,6 +7,7 @@ import mysql.connector as connector
 from customtkinter import *
 from tkcalendar import DateEntry
 from datetime import datetime, timedelta
+import threading
 
 
 # -----------------------------------------------Ships-------------------------------------------------
@@ -227,7 +228,7 @@ def mainthing(x):
         departure_time_label.grid(row=1, column=6, padx=10, pady=10)
 
         # Use DateEntry for selecting dates
-        departure_date_entry = DateEntry(data_frame, width=12, background='darkblue', foreground='white', borderwidth=2,date_pattern='yyyy-mm-dd')
+        departure_date_entry = DateEntry(data_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         departure_date_entry.grid(row=1, column=7, padx=10, pady=10)
 
         # Use Combobox for selecting times
@@ -247,7 +248,7 @@ def mainthing(x):
         arrival_time_label.grid(row=2, column=2, padx=10, pady=10)
         
         # Use DateEntry for selecting dates
-        arrival_date_entry = DateEntry(data_frame, width=12, background='darkblue', foreground='white', borderwidth=2,date_pattern='yyyy-mm-dd')
+        arrival_date_entry = DateEntry(data_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         arrival_date_entry.grid(row=2, column=3, padx=10, pady=10)
         arrival_time_entry = ttk.Combobox(data_frame, values=time_values, state="readonly")
         arrival_time_entry.grid(row=2, column=4, padx=8, pady=10)
@@ -298,7 +299,6 @@ def mainthing(x):
 
             # Grabing selected record(number to be precise)
             selected = my_tree.focus()
-            print(f'Selected: {selected}')
             # Grab record values
             values = my_tree.item(selected, 'values')
 
@@ -313,7 +313,6 @@ def mainthing(x):
             image_path_entry.insert(0, values[10])
 
             if selected:
-                print("Button Show")
                 show_info.pack(side=BOTTOM, anchor=SW, padx=10, pady=40)
             else:
                 show_info.pack_forget()
@@ -374,34 +373,20 @@ def mainthing(x):
 
         def update_record():
             selected = my_tree.focus()
-            values = my_tree.item(selected, 'values')
 
             # Get date and time separately
             departure_date = departure_date_entry.get_date()
-            departure_time_str = departure_time_entry.get()
-            if departure_time_str:
-                departure_time = datetime.strptime(departure_time_entry.get(), '%H:%M').time()
-            else:
-                departure_time=datetime.strptime(values[7], '%Y-%m-%d %H:%M:%S').time()
+            departure_time = departure_time_entry.get()
+
             departure_datetime = datetime.combine(departure_date, departure_time)
 
             arrival_date = arrival_date_entry.get_date()
-
-            arrival_time_str = arrival_time_entry.get()
-            # Check if arrival_time_str is not empty before parsing
-            if arrival_time_str:
-                arrival_time = datetime.strptime(arrival_time_str, '%H:%M').time()
-            else:
-                # Handle the case where arrival_time_str is empty, for example, set a default time
-                arrival_time = datetime.strptime(values[9], '%Y-%m-%d %H:%M:%S').time()
-
-            # Combine the date and time
-            arrival_datetime = datetime.combine(arrival_date, arrival_time)
+            arrival_time = arrival_time_entry.get()
 
             arrival_datetime = datetime.combine(arrival_date, arrival_time)
 
             my_tree.item(selected, text='', values=(
-                    n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(),departure_datetime ,destination_entry.get(), arrival_datetime, image_path_entry.get()
+                    n_entry.get(), type_entry.get(), imo_entry.get(),capacity_entry.get() ,condition_entry.get(), navigation_status_entry.get(), embarkation_entry.get(),departure_datetime ,destination_entry.get(), arrival_datetime
                 ))
             
             # MySQL
@@ -444,9 +429,11 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
-            image_path_entry.delete(0, END)
+            
 
         # Remove One Selected
         def remove_one():
@@ -531,6 +518,9 @@ def mainthing(x):
         # ------------Binding-----------
         my_tree.bind("<ButtonRelease-1>", select_record)
 
+        # background_thread = threading.Thread(target=check_and_update_navigation_status, daemon=True)
+        # background_thread.start()
+
         return dataframe
     else:
         dataframe.destroy()
@@ -568,10 +558,10 @@ def check_and_update_navigation_status():
                     mydata.commit()
 
                     # Update the Treeview
-                    my_tree.item(record, values=(values[0], values[1], values[2], values[3], values[4], 'DOCKED', values[6], values[7], values[8], values[9], values[10], values[11]))
+                    my_tree.item(record, values=(values[0], values[1], values[2], values[3], values[4], values[5], 'DOCKED', values[6], values[7], values[8], values[9], values[10]))
 
         # Schedule the function to run again after 60 seconds
-        root.after(10000, check_and_update_navigation_status)
+        root.after(60000, check_and_update_navigation_status)
 
     except Exception as e:
         print(f"Error in background thread: {e}")
@@ -579,7 +569,7 @@ def check_and_update_navigation_status():
 # Start the background thread
 check_and_update_navigation_status()
 
-def  display_ship_details(ship_name,ship_type,imo_number,capacity,condition,navigation_status,embarkation,arrivaltime,destination,destinationtime,imagepath):
+def   display_ship_details(ship_name,ship_type,imo_number,capacity,condition,navigation_status,embarkation,arrivaltime,destination,destinationtime,imagepath):
     global detail_frame
     detail_frame = Frame(root, width=1200, height=600, bg='#161f1e')
     detail_frame.place(relx=0.5, rely=0.5, anchor=CENTER)
@@ -638,17 +628,9 @@ def ship_info_detail():
     back_button = CTkButton(frame1,text='',image=backbtn_img, command=backbtn)
     back_button.pack(side=TOP, anchor='nw', pady=20, padx=20)
 
-    selected = my_tree.focus()
-    print('final')
-    values = my_tree.item(selected, 'values')
-    print(f'Selected Ship: {selected}')
-    if dataframe:
-        dataframe.destroy()
-        show_info.pack_forget()
-        print('hello2')
-    if selected:
-        print('hello3')
-        print('hello4')
+    selectedship = my_tree.focus()
+    if selectedship:
+        values = my_tree.item(selectedship, 'values')
         x = list(values)
         # Iterate up to the second-to-last element
         i = 0
@@ -662,8 +644,9 @@ def ship_info_detail():
                 i += 1
         print(x)
         display_ship_details(*x)
-        print('nothing')
-    
+    if dataframe:
+        dataframe.destroy()
+        show_info.pack_forget()
     
     
 def backbtn():
@@ -677,7 +660,5 @@ def backbtn():
 # Button To see data
 btn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\photos\search.png")
 show_info = CTkButton(master=frame1,text='',image=btn_img, command=ship_info_detail, bg_color="transparent",cursor='hand2', width=23)
-
-
 # --------------------End-------------------
 root.mainloop()
