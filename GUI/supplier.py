@@ -61,7 +61,7 @@ sidebar.place(x=0, y=0, height= height, width= width//5)
 
 # ------------------------------------------------------------------------------------
 # -------User--------
-user_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\photos\user.png")
+user_pic = Image.open(r"photos\user.png")
 user_pic = user_pic.resize((int(width)//10,int(height)//5))
 user_tkimg = ImageTk.PhotoImage(user_pic)
 

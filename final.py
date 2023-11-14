@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+from tkintermapview import TkinterMapView
 from PIL import ImageTk, Image
 import mysql.connector as connector
 from datetime import *
@@ -60,7 +61,7 @@ root.configure(bg='white')
 # admin_frame = Frame(root, width=width, height=height)
 # supplier_frame = Frame(root, width=width, height=height)
 
-background_img = Image.open(r"E:\Project CS\Vessel Traffic Management System\photos\loginphoto.jpg")
+background_img = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\loginphoto.jpg")
 background_img = background_img.resize((width, height))
 background_tkimg = ImageTk.PhotoImage(background_img)
 
@@ -125,7 +126,7 @@ def signin_window():
             if verify_supplier(username, key):
                 messagebox.showinfo("Login Successful", "Supplier login successful!")
                 # Call supplier menu function
-                # supplier_menu()
+                supplier_menu()
                 print(2)
             else:
                 messagebox.showerror("Login Failed", "Invalid username or password.")
@@ -151,10 +152,10 @@ def signin_window():
     def verify_supplier(username, password):
         db = connect_to_database()
         cursor = db.cursor()
-        cursor.execute("select * from login")
+        cursor.execute("select * from authentication")
         result = cursor.fetchall()
         for data in result:
-            if data[1] == username and data[2] == password:
+            if data[0] == username and data[1] == password:
                 db.close()
                 return result is not None
             else:
@@ -195,12 +196,31 @@ def signin_window():
     # Button
     Button(frame, width=39, pady=7, text='Sign In', command=signin, bg ='#57a1f8', fg= 'white', border=0).place(x=35, y=300)
 
-# -------------------------------Supplier------------------------------
+# ------------------------------------------------Supplier-------------------------------------------
+user_pic = Image.open(r"GUI\photos\user.png")
+user_pic = user_pic.resize((int(width)//10,int(height)//5))
+user_tkimg = ImageTk.PhotoImage(user_pic)
+
+# -----View Ships Icon-----
+view_ships_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\map-icon.png")
+view_ships_pic = view_ships_pic.resize((50,50))
+view_ships_tkimg = ImageTk.PhotoImage(view_ships_pic)
+
+# -----Book Ships Icon-----
+book_ships_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\booking.png")
+book_ships_pic = book_ships_pic.resize((50,50))
+book_ships_tkimg = ImageTk.PhotoImage(book_ships_pic)
+
+
+# -------Time And Date-------
+clock_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\clock.png")
+clock_pic = clock_pic.resize((50,50))
+clock_tkimg = ImageTk.PhotoImage(clock_pic)
 def supplier_menu():
     global signin_frame
     signin_frame.destroy()
-    supplier_frame = Frame(root)
-    supplier_frame.pack()
+    supplier_frame = Frame(root, width=width, height=height)
+    supplier_frame.pack(fill=BOTH, expand=True)
     def show_time():
         Time = time.strftime("%H:%M:%S")
         Date = time.strftime('%Y:%m:%d')
@@ -222,6 +242,18 @@ def supplier_menu():
                     cursor='hand2', activebackground='#32cf8e')
     logout.place(x=1080, y=30)
 
+    # ---------------------------------Mapping--------------------------------------
+    map_frame = Frame(supplier_frame, height = height, width=width//20)
+    map_frame.place(x=50, y=50)
+    map_widget = TkinterMapView(supplier_frame, width=600, height=400
+                                ,corner_radius=0)
+    map_widget.pack(fill='both', expand=True)
+
+    map_widget.set_position(-23.9759994293, -46.2888955111)
+    map_widget.set_zoom(100)
+
+    marker_1 = map_widget.set_marker(-23.9759994293, -46.2888955111, text= "PORT OF SANTOS, BRAZIL")
+
 
     # ------------------------------------Sidebar----------------------------------------
     sidebar = Frame(supplier_frame, bg='#ffffff')
@@ -230,9 +262,7 @@ def supplier_menu():
 
     # ------------------------------------------------------------------------------------
     # -------User--------
-    user_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\photos\user.png")
-    user_pic = user_pic.resize((int(width)//10,int(height)//5))
-    user_tkimg = ImageTk.PhotoImage(user_pic)
+    
 
     user_pic_label = Label(sidebar, image=user_tkimg, bg='#ffffff')
     user_pic_label.place(x=75, y=10)
@@ -243,10 +273,7 @@ def supplier_menu():
     # ----------------------------------------------------------------------------------
 
     # ----------------------------------------------------------------------------------
-    # -----View Ships Icon-----
-    view_ships_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\photos\map-icon.png")
-    view_ships_pic = view_ships_pic.resize((50,50))
-    view_ships_tkimg = ImageTk.PhotoImage(view_ships_pic)
+    
 
     view_ships_pic_label = Label(sidebar, image=view_ships_tkimg, bg='#ffffff', cursor='hand2')
     view_ships_pic_label.place(x=35, y=289)
@@ -259,10 +286,7 @@ def supplier_menu():
 
 
     # ----------------------------------------------------------------------------------
-    # -----Book Ships Icon-----
-    book_ships_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\photos\booking.png")
-    book_ships_pic = book_ships_pic.resize((50,50))
-    book_ships_tkimg = ImageTk.PhotoImage(book_ships_pic)
+    
 
     book_ships_pic_label = Label(sidebar, image=book_ships_tkimg, bg='#ffffff', cursor='hand2')
     book_ships_pic_label.place(x=35, y=370)
@@ -275,10 +299,7 @@ def supplier_menu():
 
 
     # ----------------------------------------------------------------------------------
-    # -------Time And Date-------
-    clock_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\photos\clock.png")
-    clock_pic = clock_pic.resize((50,50))
-    clock_tkimg = ImageTk.PhotoImage(clock_pic)
+    
 
     clock_pic_label = Label(sidebar, image=clock_tkimg, bg='#ffffff')
     clock_pic_label.place(x= 35, y=(height)-100)
@@ -881,14 +902,13 @@ def admin_menu():
         arrival_time_label = CTkLabel(otherdetaillabel, text=f"Arrival Time: {arrivaltime}", bg_color='#161f1e', fg_color='#4d81c9', font=("Helvetica", 14), corner_radius=5)
         arrival_time_label.grid(row=2, column=0, pady=10, padx=13)
 
-
     def ship_info_detail():
         global dataframe, detail_frame, back_button
         
 
 
         # Button to go back to the main view
-        backbtn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\photos\backbtn.png")
+        backbtn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\GUI\photos\backbtn.png")
         # Resize the image to, for example, 25% of its original size
         backbtn_img = backbtn_img.subsample(5, 5)
         back_button = CTkButton(frame1,text='',image=backbtn_img, command=backbtn)
@@ -920,8 +940,6 @@ def admin_menu():
             display_ship_details(*x)
             print('nothing')
         
-        
-        
     def backbtn():
         print('hello')
         global detail_frame, back_button
@@ -929,18 +947,11 @@ def admin_menu():
         back_button.destroy()
         mainthing('show')
 
-
     # Button To see data
-    btn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\photos\search.png")
+    btn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\GUI\photos\search.png")
     show_info = CTkButton(master=frame1,text='',image=btn_img, command=ship_info_detail, bg_color="transparent",cursor='hand2', width=23)
 
-
-
-
-
 signin_window()
-
-
 
 # End
 root.mainloop()
