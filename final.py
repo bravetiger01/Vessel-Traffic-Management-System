@@ -605,11 +605,11 @@ def admin_menu():
 
                 if count%2==0:
                     my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
-                        n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime, image_path_entry.get()
+                        n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime, image_path_entry.get(), booking_status_entry.get()
                     ), tags=('evenrow'))
                 else:
                     my_tree.insert(parent='',index='end' ,iid=count, text='', values=(
-                        n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime, image_path_entry.get()
+                        n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime, image_path_entry.get(), booking_status_entry.get()
                     ), tags=('oddrow'))
 
                 # Create a Ships instance for the newly added record
@@ -631,8 +631,7 @@ def admin_menu():
                 new_ship.update_speed()
                 
                 # MySQL
-                csor.execute("insert into SHIPDATA values('{}','{}',{},{},'{}','{}','{}','{}','{}','{}','{}')".
-                            format(n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime,image_path_entry.get(), booking_status_entry.get()))
+                csor.execute(f"insert into SHIPDATA values('{n_entry.get()}','{type_entry.get()}',{imo_entry.get()},{capacity_entry.get()},'{condition_entry.get()}','{navigation_status_entry.get()}','{embarkation_entry.get()}','{departure_datetime}','{destination_entry.get()}','{arrival_datetime}','{image_path_entry.get()}', '{booking_status_entry.get()}')")
                 db.commit()
                 
                 n_entry.delete(0, END)
@@ -644,6 +643,7 @@ def admin_menu():
                 destination_entry.delete(0, END)
                 arrival_time_entry.delete(0, END)
                 image_path_entry.delete(0, END)
+                booking_status_entry.set('BOOKED')
 
             def update_record():
                 selected = my_tree.focus()

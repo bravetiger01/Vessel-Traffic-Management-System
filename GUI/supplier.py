@@ -29,9 +29,9 @@ class Ships:
         self.Type = type
         self.Embarkation = Embarkation
         self.BookingStatus=bookingstatus
-        self.Departure_Time = arrivaltime
+        self.Departure_Time = departuretime
         self.Destination = Destination
-        self.Arrival_Time = departuretime
+        self.Arrival_Time = arrivaltime
         self.Image_Location = imagelocation
         self.Capacity = capacity
 
@@ -87,7 +87,7 @@ def view_ship():
 
     
     # Create a canvas for the scrollable area
-    canvas = Canvas(view_ship_frame, bg='#ffffff', width=1200, height=700)
+    canvas = Canvas(view_ship_frame, bg='#ffffff', width=1200, height=height)
     canvas.pack(side="left", fill="both", expand=True)
 
     # Add a scrollbar
@@ -138,16 +138,86 @@ def view_ship():
         display_ship_card(ship_instance, i // 3, i % 3)
 
 
-    
-
+# Function to book a ship
+def book_this_ship(ship_data):
+    # Implement your logic to book the ship
+    print(f"Booking ship: {ship_data.Name}")
+    ship_data.BookingStatus = 'BOOKED'
+    db = connect_to_database()
+    csor = db.cursor()
+    csor.execute(f"UPDATE SHIPDATA SET Name = '{ship_data.Name}',TYPE = '{ship_data.Type}',IMO = {ship_data.IMO_Number},Capacity = {ship_data.Capacity},`Condition` = '{ship_data.Condition}',Navigation_Status = '{ship_data.Navigation_Status}',Embarkation = '{ship_data.Embarkation}',Departure_Time = '{ship_data.Departure_Time}',Destination = '{ship_data.Destination}',Arrival_Time = '{ship_data.Arrival_Time}',Image = '{ship_data.Image_Location}',BookingStatus = '{ship_data.BookingStatus}' WHERE IMO = {ship_data.IMO_Number}")
+    db.commit()
+    indicate(view_ships_indicator, view_ship)
     
 def book_ship():
     book_ship_frame = Frame(main_frame)
-
-    label = Label(book_ship_frame, text='Book Ship Label \n\nPage 2', font=('Bold', 30))
-    label.pack()
-
     book_ship_frame.pack(pady=20)
+
+    # Fetch all ships
+    ships_data = fetch_ship_data()
+    for i in ships_data:
+        print(i)
+        print()
+
+    # Create a canvas for the scrollable area
+    canvas = Canvas(book_ship_frame, bg='#ffffff', width=1200, height=height)
+    canvas.pack(side="left", fill="both", expand=True, anchor='w')
+
+    # Add a scrollbar
+    scrollbar = ttk.Scrollbar(book_ship_frame, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+
+    # Configure the canvas
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    # Create a frame inside the canvas
+    frame2 = Frame(canvas, highlightbackground='black', highlightthickness=2)
+    canvas.create_window((0, 0), window=frame2, anchor="nw", width=1800, height=(height+height))
+    # Bind the canvas to the scrollbar
+    frame2.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+    def display_ship_card(ship_data, row, column):
+        print("Displaying ship data:", ship_data)
+        card_frame = ttk.Frame(frame2, borderwidth=10, relief="solid", width=1700, height=400)
+        card_frame.grid(row=row,column=column,pady=10)
+
+        # Ship image
+        ship_image = Image.open(ship_data.Image_Location)
+        ship_image = ship_image.resize((800, 400))  # Adjust the size as needed
+        ship_image_tk_list.append(ImageTk.PhotoImage(ship_image))
+
+        Label(card_frame, image=ship_image_tk_list[-1], width=400).grid(row=0,column=0,pady=5, rowspan=6)
+
+        # Ship name and Embarkation
+        Label(card_frame, text=f"Ship: {ship_data.Name}", font=('Bold', 16)).grid(row=0, column=2, sticky="w")
+        Label(card_frame, text=f"Embarkation: {ship_data.Embarkation}", font=('Bold', 14)).grid(row=1, column=2, sticky="w")
+
+        # Display all details
+        Label(card_frame, text=f"IMO Number: {ship_data.IMO_Number}", font=('Bold', 14)).grid(row=1, column=1, sticky="w", padx=3)
+        Label(card_frame, text=f"Type: {ship_data.Type}", font=('Bold', 14)).grid(row=2, column=1, sticky="w", padx=3)
+        Label(card_frame, text=f"Condition: {ship_data.Condition}", font=('Bold', 14)).grid(row=3, column=1, sticky="w", padx=3)
+        Label(card_frame, text=f"Capacity: {ship_data.Capacity}", font=('Bold', 14)).grid(row=3, column=2, sticky="w", padx=3)
+        Label(card_frame, text=f"Destination: {ship_data.Destination}", font=('Bold', 14)).grid(row=2, column=2, sticky="w", padx=3)
+        Label(card_frame, text=f"Departure Time: {ship_data.Departure_Time}", font=('Bold', 14)).grid(row=1, column=3, sticky="w", padx=3)
+        Label(card_frame, text=f"Arrival Time: {ship_data.Arrival_Time}", font=('Bold', 14)).grid(row=2, column=3, sticky="w", padx=3)
+        Label(card_frame, text=f"Navigation Status: {ship_data.Navigation_Status}", font=('Bold', 14)).grid(row=3, column=3, sticky="w", padx=3)
+        Label(card_frame, text=f"Booking Status: {ship_data.BookingStatus}", font=('Bold', 14)).grid(row=4, column=2, sticky="w", padx=3)
+
+        book_button = Button(card_frame, text="Book Ship", command=lambda: book_this_ship(ship_data))
+        # If the ship is not booked, show the book button
+        if ship_data.BookingStatus== 'NOT BOOKED':
+            book_button.grid(row=5,column=2)
+
+    ships_instances = [Ships(name=ship["Name"], IMO_Number=ship["IMO"], condition=ship["Condition"],
+                            capacity=ship["Capacity"], navigation_status=ship["Navigation_Status"],
+                            type=ship["TYPE"], Embarkation=ship["Embarkation"], departuretime=ship["Departure_Time"],
+                            Destination=ship["Destination"], arrivaltime=ship["Arrival_Time"],
+                            imagelocation=ship["Image"], bookingstatus=ship["BookingStatus"]) for ship in ships_data]
+    
+    print("Number of ships instances:", len(ships_instances))
+    # Display Ship Card
+    for i, ship_instance in enumerate(ships_instances):
+        display_ship_card(ship_instance, i, 0)
 
 
 def hide_indicators():
@@ -172,7 +242,7 @@ def indicate(lb, page):
 # -----------------------------------------------------------------------------
 
 # ------------------------------------Sidebar----------------------------------------
-sidebar = Frame(root,bg='#ffffff',height=height,width=width//5)
+sidebar = Frame(root,bg='#ffffff',height=height,width=(width//5)-15)
 sidebar.pack(side=LEFT)
 sidebar.pack_propagate(False)
 
@@ -182,7 +252,7 @@ main_frame = Frame(root, highlightbackground='black', highlightthickness=2, widt
 main_frame.pack(side=LEFT)
 main_frame.pack_propagate(False)
 
-header = Frame(main_frame, bg='#009df4', width=width, height=height//10)
+header = Frame(main_frame, bg='#009df4', width=width, height=(height//10)-10)
 header.pack()
 
 logout = Button(header, text='Logout', bg='#32cf8e', font=('', 13, 'bold'), bd=0, fg='white', 
