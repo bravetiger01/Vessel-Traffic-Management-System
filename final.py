@@ -272,21 +272,21 @@ def supplier_menu():
 
         # Create a frame inside the canvas
         frame = ttk.Frame(canvas)
-        canvas.create_window((0, 0), window=frame, anchor="nw", width=1200, height=height)
+        canvas.create_window((0, 0), window=frame, anchor="nw", width=1200, height=height+height)
         # Bind the canvas to the scrollbar
         frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
         def display_ship_card(ship_data, row, column):
             global ship_image_tk_list
-            card_frame = ttk.Frame(frame, borderwidth=2, relief="solid", width=400, height=400)
-            card_frame.grid(row=row, column=column, padx=10, pady=10)
+            card_frame = ttk.Frame(frame, borderwidth=2, relief="solid", width=1200, height=600)
+            card_frame.grid(row=row, column=column, padx=50, pady=30)
 
             # Ship image
             ship_image = Image.open(ship_data.Image_Location)
-            ship_image = ship_image.resize((400,400))  # Adjust the size as needed
+            ship_image = ship_image.resize((1000,500))  # Adjust the size as needed
             ship_image_tk_list.append(ImageTk.PhotoImage(ship_image))
 
-            Label(card_frame, image=ship_image_tk_list[-1], width=400).grid(row=0, column=0, columnspan=2, pady=5)
+            Label(card_frame, image=ship_image_tk_list[-1], width=500).grid(row=0, column=0, columnspan=2, pady=5)
 
             # Ship name and Embarkation
             Label(card_frame, text=f"Ship: {ship_data.Name}", width=60).grid(row=1, column=0, sticky="w")
@@ -308,7 +308,7 @@ def supplier_menu():
 
         # Display Ship Card
         for i, ship_instance in enumerate(ships_instances):
-            display_ship_card(ship_instance, i // 3, i % 3)
+            display_ship_card(ship_instance, i // 2, i % 2)
 
 
     # Function to book a ship
@@ -351,8 +351,11 @@ def supplier_menu():
 
         def display_ship_card(ship_data, row, column):
             print("Displaying ship data:", ship_data)
-            card_frame = ttk.Frame(frame2, borderwidth=10, relief="solid", width=1700, height=400)
-            card_frame.grid(row=row,column=column,pady=10)
+            card_frame = Frame(frame2, borderwidth=5, width=1400, height=400,relief='groove',highlightthickness=2)
+            card_frame.grid(row=row,column=column,pady=10, columnspan=15)
+
+            if ship_data.BookingStatus == 'NOT BOOKED':
+                card_frame.grid_configure(padx=10)
 
             # Ship image
             ship_image = Image.open(ship_data.Image_Location)
@@ -363,23 +366,25 @@ def supplier_menu():
 
             # Ship name and Embarkation
             Label(card_frame, text=f"Ship: {ship_data.Name}", font=('Bold', 16)).grid(row=0, column=2, sticky="w")
-            Label(card_frame, text=f"Embarkation: {ship_data.Embarkation}", font=('Bold', 14)).grid(row=1, column=2, sticky="w")
+            Label(card_frame, text=f"Embarkation: {ship_data.Embarkation}", font=('Bold', 12)).grid(row=1, column=2, sticky="w")
 
             # Display all details
-            Label(card_frame, text=f"IMO Number: {ship_data.IMO_Number}", font=('Bold', 14)).grid(row=1, column=1, sticky="w", padx=3)
-            Label(card_frame, text=f"Type: {ship_data.Type}", font=('Bold', 14)).grid(row=2, column=1, sticky="w", padx=3)
-            Label(card_frame, text=f"Condition: {ship_data.Condition}", font=('Bold', 14)).grid(row=3, column=1, sticky="w", padx=3)
-            Label(card_frame, text=f"Capacity: {ship_data.Capacity}", font=('Bold', 14)).grid(row=3, column=2, sticky="w", padx=3)
-            Label(card_frame, text=f"Destination: {ship_data.Destination}", font=('Bold', 14)).grid(row=2, column=2, sticky="w", padx=3)
-            Label(card_frame, text=f"Departure Time: {ship_data.Departure_Time}", font=('Bold', 14)).grid(row=1, column=3, sticky="w", padx=3)
-            Label(card_frame, text=f"Arrival Time: {ship_data.Arrival_Time}", font=('Bold', 14)).grid(row=2, column=3, sticky="w", padx=3)
-            Label(card_frame, text=f"Navigation Status: {ship_data.Navigation_Status}", font=('Bold', 14)).grid(row=3, column=3, sticky="w", padx=3)
-            Label(card_frame, text=f"Booking Status: {ship_data.BookingStatus}", font=('Bold', 14)).grid(row=4, column=2, sticky="w", padx=3)
-
-            book_button = Button(card_frame, text="Book Ship", command=lambda: book_this_ship(ship_data))
+            Label(card_frame, text=f"IMO Number: {ship_data.IMO_Number}", font=('Bold', 12)).grid(row=1, column=1, sticky="w",padx=1)
+            Label(card_frame, text=f"Type: {ship_data.Type}", font=('Bold', 12)).grid(row=2, column=1, sticky="w",padx=1)
+            Label(card_frame, text=f"Condition: {ship_data.Condition}", font=('Bold', 12)).grid(row=3, column=1, sticky="w",padx=1)
+            Label(card_frame, text=f"Capacity: {ship_data.Capacity}", font=('Bold', 12)).grid(row=3, column=2, sticky="w",padx=1)
+            Label(card_frame, text=f"Destination: {ship_data.Destination}", font=('Bold', 12)).grid(row=2, column=2, sticky="w",padx=1)
+            Label(card_frame, text=f"Departure Time: {ship_data.Departure_Time}", font=('Bold', 12)).grid(row=1, column=3, sticky="w",padx=1)
+            Label(card_frame, text=f"Arrival Time: {ship_data.Arrival_Time}", font=('Bold', 12)).grid(row=2, column=3, sticky="w",padx=1)
+            Label(card_frame, text=f"Navigation Status: {ship_data.Navigation_Status}", font=('Bold', 12)).grid(row=3, column=3, sticky="w",padx=1)
             # If the ship is not booked, show the book button
-            if ship_data.BookingStatus== 'NOT BOOKED':
+            if ship_data.BookingStatus== 'BOOKED':
+                Label(card_frame, text=f"Booking Status: \b\b\b{ship_data.BookingStatus}", font=('Bold', 12)).grid(row=4, column=2, sticky="w",padx=1)
+
+            else:
+                book_button = CTkButton(card_frame, text="Book Ship", command=lambda: book_this_ship(ship_data))
                 book_button.grid(row=5,column=2)
+                Label(card_frame, text=f"Booking Status: {ship_data.BookingStatus}", font=('Bold', 12)).grid(row=4, column=2, sticky="w",padx=1)
 
         ships_instances = [Ships(name=ship["Name"], IMO_Number=ship["IMO"], condition=ship["Condition"],
                                 capacity=ship["Capacity"], navigation_status=ship["Navigation_Status"],
