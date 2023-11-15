@@ -1,14 +1,11 @@
 from tkinter import *
 from tkinter import ttk
-from tkinter import messagebox
-from PIL import ImageTk, Image, ImageDraw, ImageFont
+from PIL import ImageTk, Image
 import random
 import mysql.connector as connector
 from customtkinter import *
 from tkcalendar import DateEntry
-from datetime import datetime, timedelta
-import threading
-
+from datetime import datetime
 
 # -----------------------------------------------Ships-------------------------------------------------
 class Ships:
