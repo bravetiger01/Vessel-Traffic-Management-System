@@ -55,6 +55,7 @@ width, height = root.winfo_screenwidth(), root.winfo_screenheight()
 root.title('Vessel Traffic Managment System')
 root.geometry('%dx%d+0+0' % (width,height))
 root.configure(bg='white')
+global check_and_update_navigation_status
 
 # -------------------Designing----------------
 
@@ -218,10 +219,24 @@ clock_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\phot
 clock_pic = clock_pic.resize((50,50))
 clock_tkimg = ImageTk.PhotoImage(clock_pic)
 
+# Logout Button
+logout_btn_pic = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\logout.png")
+logout_btn_pic = logout_btn_pic.resize((50,50))
+logout_btn_tkimg = CTkImage(logout_btn_pic)
+
+def logout():
+    global frame1
+    try:
+        frame1.destroy()
+    except:
+        supplier_frame.destroy()
+    finally:
+        signin_window()
+    
 
 # ---------------------------------------------------------------Supplier Menu-----------------------------------------------------------
 def supplier_menu():
-    global signin_frame, user_tkimg, clock_tkimg, background_tkimg, book_ships_tkimg, view_ships_tkimg, ship_image_tk_list
+    global signin_frame,user_tkimg,clock_tkimg,background_tkimg,book_ships_tkimg,view_ships_tkimg,ship_image_tk_list,supplier_frame
     signin_frame.destroy()
     supplier_frame = Frame(root, width=width, height=height)
     supplier_frame.pack(fill=BOTH, expand=True)
@@ -289,14 +304,17 @@ def supplier_menu():
             Label(card_frame, image=ship_image_tk_list[-1], width=500).grid(row=0, column=0, columnspan=2, pady=5)
 
             # Ship name and Embarkation
-            Label(card_frame, text=f"Ship: {ship_data.Name}", width=60).grid(row=1, column=0, sticky="w")
-            Label(card_frame, text=f"Embarkation: {ship_data.Embarkation}", width=60).grid(row=2, column=0, sticky="w")
+            Label(card_frame, text=f"Ship: {ship_data.Name}", width=60).grid(row=1, column=1, sticky="w")
+            Label(card_frame, text=f"Type: {ship_data.Type}", width=60).grid(row=2, column=1, sticky="w")
+            Label(card_frame, text=f"Capacity: {ship_data.Capacity}", width=60).grid(row=3, column=1, sticky="w")
+            Label(card_frame, text=f"Embarkation: {ship_data.Embarkation}", width=60).grid(row=4, column=1, sticky="w")
+            Label(card_frame, text=f"Destination: {ship_data.Destination}", width=60).grid(row=5, column=1, sticky="w")
 
             # Display booking status
             if ship_data.BookingStatus == "BOOKED":
-                Label(card_frame, text="Booking Status: BOOKED", fg="green", width=60).grid(row=3, column=0, columnspan=2, pady=5)
+                Label(card_frame, text="Booking Status: BOOKED", fg="green", width=60).grid(row=6, column=0, columnspan=2, pady=5)
             else:
-                Label(card_frame, text="Booking Status: NOT BOOKED", fg="red", width=60).grid(row=3, column=0, columnspan=2, pady=5)
+                Label(card_frame, text="Booking Status: NOT BOOKED", fg="red", width=60).grid(row=6, column=0, columnspan=2, pady=5)
         
         # Create instances of the Ships class from the fetched data
         ships_data = fetch_booked_ships()
@@ -328,9 +346,6 @@ def supplier_menu():
 
         # Fetch all ships
         ships_data = fetch_ship_data()
-        for i in ships_data:
-            print(i)
-            print()
 
         # Create a canvas for the scrollable area
         canvas = Canvas(book_ship_frame, bg='#ffffff', width=1200, height=height)
@@ -433,9 +448,8 @@ def supplier_menu():
     header = Frame(main_frame, bg='#009df4', width=width, height=(height//10)-10)
     header.pack()
 
-    logout = Button(header, text='Logout', bg='#32cf8e', font=('', 13, 'bold'), bd=0, fg='white', 
-                    cursor='hand2', activebackground='#32cf8e')
-    logout.place(x=1080, y=30)
+    logoutbtn = Button(header, text='Logout',bg='#32cf8e',font=('', 13, 'bold'),bd=0,fg='white',cursor='hand2',activebackground='#32cf8e',command=logout)
+    logoutbtn.place(x=1080, y=30)
 
     # ------------------------------------------------------------------------------------
     # -------User--------
@@ -503,12 +517,15 @@ def supplier_menu():
 
 # ----------------------------------------------------------------Admin Menu-------------------------------------------------------------
 def admin_menu():
-    global signin_frame, my_tree
+    global frame1,signin_frame,my_tree,logoutbtn,check_and_update_navigation_status
     signin_frame.destroy()
     db = connect_to_database()
     csor = db.cursor()
-    frame1 = CTkFrame(master=root, width=width, height=height)
-    frame1.pack(fill=BOTH, expand=True)
+    frame1 = CTkFrame(master=root,width=width,height=height)
+    frame1.pack(fill=BOTH,expand=True)
+
+    logoutbtn = CTkButton(master=frame1,text='',image=logout_btn_tkimg,width=50,height=50,command=logout)
+    logoutbtn.pack(side=TOP,anchor=NW,padx=5,pady=5)
 
     dataframe = None
 
@@ -528,13 +545,13 @@ def admin_menu():
 
     # ---------------------------------------------Data Showing-------------------------------------------
     def mainthing(x):
-        global dataframe, my_tree, image_path_entry, my_tree
+        global dataframe,my_tree,image_path_entry,my_tree
         if x == 'show':
-            dataframe = CTkFrame(master=frame1, width=500, height=1000,
-                            corner_radius=15, border_width=0)
+            dataframe = CTkFrame(master=frame1,width=450,height=1000,
+                            corner_radius=15,border_width=2)
 
             dataframe.place(relx=0.5, rely=0.5, anchor=CENTER)
-            dataframe.pack_configure(expand=True, padx=10)
+            dataframe.pack_configure(expand=True,padx=5)
             # -----------------------------Treeview------------------------------------
             # Style
             style = ttk.Style()
@@ -776,7 +793,7 @@ def admin_menu():
 
                 if selected:
                     print("Button Show")
-                    show_info.pack(side=BOTTOM, anchor=SW, padx=10, pady=40)
+                    show_info.pack(side=BOTTOM,anchor=SW,padx=20,pady=15)
                 else:
                     show_info.pack_forget()
 
@@ -1011,7 +1028,7 @@ def admin_menu():
     mainthing('show')
 
     def check_and_update_navigation_status():
-        global my_tree
+        global my_tree,check_and_update_navigation_status
         try:
             # Get the current time
             current_time = datetime.now()
@@ -1019,12 +1036,7 @@ def admin_menu():
             # Iterate through records and update navigation status if needed
             for record in my_tree.get_children():
                 values = my_tree.item(record, 'values')
-                x = list(values)
-                for i in range (0,len(x)):
-                    if x[i] == x[i-1]:
-                        x.remove(i)
-                    print(x)
-                arrival_time_str = x[9]  # Assuming 'Arrival Time' is at index 9
+                arrival_time_str = values[9]  # Assuming 'Arrival Time' is at index 9
 
                 if arrival_time_str:
                     arrival_time = datetime.strptime(arrival_time_str, '%Y-%m-%d %H:%M:%S')
@@ -1039,9 +1051,9 @@ def admin_menu():
 
                         # Update the Treeview
                         my_tree.item(record, values=(values[0], values[1], values[2], values[3], values[4], 'DOCKED', values[6], values[7], values[8], values[9], values[10], values[11]))
-
-            # Schedule the function to run again after 60 seconds
-            root.after(10000, check_and_update_navigation_status)
+            for i in range(0,20):
+                # Schedule the function to run again after 60 seconds
+                root.after(10000,check_and_update_navigation_status)
 
         except Exception as e:
             print(f"Error in background thread: {e}")
@@ -1049,7 +1061,7 @@ def admin_menu():
     # Start the background thread
     check_and_update_navigation_status()
 
-    def  display_ship_details(ship_name,ship_type,imo_number,capacity,condition,navigation_status,embarkation,departuretime,destination,arrivaltime,imagepath):
+    def  display_ship_details(ship_name,ship_type,imo_number,capacity,condition,navigation_status,embarkation,departuretime,destination,arrivaltime,imagepath,bookingstatus):
         global detail_frame
         detail_frame = Frame(root, width=1200, height=600, bg='#161f1e')
         detail_frame.place(relx=0.5, rely=0.5, anchor=CENTER)
@@ -1102,10 +1114,7 @@ def admin_menu():
         arrival_time_label.grid(row=2, column=0, pady=10, padx=13)
 
     def ship_info_detail():
-        global dataframe, detail_frame, back_button
-        
-
-
+        global dataframe,detail_frame,back_button,logoutbtn
         # Button to go back to the main view
         backbtn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\GUI\photos\backbtn.png")
         # Resize the image to, for example, 25% of its original size
@@ -1120,10 +1129,9 @@ def admin_menu():
         if dataframe:
             dataframe.destroy()
             show_info.pack_forget()
+            logoutbtn.pack_forget()
             print('hello2')
         if selected:
-            print('hello3')
-            print('hello4')
             x = list(values)
             # Iterate up to the second-to-last element
             i = 0
@@ -1135,22 +1143,23 @@ def admin_menu():
                 else:
                     # If no, move to the next element
                     i += 1
-            print(x)
             display_ship_details(*x)
             print('nothing')
         
     def backbtn():
         print('hello')
-        global detail_frame, back_button
+        global detail_frame,back_button,logoutbtn
         detail_frame.destroy()
         back_button.destroy()
+        logoutbtn.pack(side=TOP, anchor=NW, padx=10, pady=5)
         mainthing('show')
 
     # Button To see data
-    btn_img = PhotoImage(file = r"E:\Project CS\Vessel Traffic Management System\GUI\photos\search.png")
-    show_info = CTkButton(master=frame1,text='',image=btn_img, command=ship_info_detail, bg_color="transparent",cursor='hand2', width=23)
-
+    btn_img = Image.open(r"E:\Project CS\Vessel Traffic Management System\GUI\photos\search.png")
+    btn_img = btn_img.resize((50,50))
+    btn_tkimg = ImageTk.PhotoImage(btn_img)
+    show_info = CTkButton(master=frame1,text='',image=btn_tkimg,command=ship_info_detail,cursor='hand2',width=50,height=50)
 signin_window()
-
+# Schedule the function to run again after 60 seconds
 # End
 root.mainloop()
