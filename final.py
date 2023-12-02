@@ -73,15 +73,20 @@ background_tkimg = ImageTk.PhotoImage(background_img)
 
 # -----------------------------------------------------------------SIGN IN WINDOW---------------------------------------------------------
 def signin_window():
-    global signin_frame, user_name, pass_word
+    global signin_frame, user_name, pass_word,showpassword
     signin_frame = Frame(root, width=width, height=height)
     signin_frame.place(anchor='center', relx=0.5, rely=0.5)
     print(1)
 
+    showpassword = True
+
     # Username
     def on_enter(e):
         global user_name
-        user_name.delete(0, 'end')
+        if user_name.get() == 'Username':
+            user_name.delete(0, 'end')
+        else:
+            pass
     def on_leave(e):
         global user_name
         name = user_name.get()
@@ -89,14 +94,26 @@ def signin_window():
             user_name.insert(0, 'Username')
 
     def on_enter1(e):
-        global pass_word
-        pass_word.delete(0, 'end')
-        pass_word.config(show='*')
+        global pass_word,showpassword
+        if pass_word.get() == 'Password':
+            pass_word.delete(0, 'end')
+            pass_word.config(show='*')
+        else:
+            if showpassword == True:
+                pass_word.config(show='*')
+            else:
+                pass_word.config(show='')
     def on_leave1(e):
-        global pass_word
+        global pass_word,showpassword
         name = pass_word.get()
         if name == '':
             pass_word.insert(0, 'Password')
+            pass_word.config(show='')
+        else:
+            if showpassword == True:
+                pass_word.config(show='*')
+            else:   
+                pass_word.config(show='')
     
 
     bglabel = Label(signin_frame, image=background_tkimg)
@@ -166,10 +183,15 @@ def signin_window():
             return result is None
     
     def show_password():
-        if pass_word.cget('show') == '*':
-            pass_word.config(show='')
+        global showpassword
+        showpassword = True
+        if pass_word.get() == 'Password':
+            pass
         else:
-            pass_word.config(show='*')
+            if pass_word.cget('show') == '*':
+                pass_word.config(show='')
+            else:
+                pass_word.config(show='*')
     
     pass_word = Entry(frame,width=25,show='*',fg='black',border = 0,bg='white',font=('Microsoft Yahei UI Light', 11))
     pass_word.place(x=30, y=150)
