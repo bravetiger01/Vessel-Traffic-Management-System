@@ -54,7 +54,6 @@ def signin():
     if verify_admin(username, password):
         messagebox.showinfo("Login Successful", "Admin login successful!")
         # Call admin menu function
-        admin_menu()
     # Verify supplier credentials
     elif verify_supplier(username, password):
         messagebox.showinfo("Login Successful", "Supplier login successful!")
