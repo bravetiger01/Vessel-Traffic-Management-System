@@ -1,17 +1,20 @@
 from tkinter import *
 from tkinter import ttk
-from PIL import ImageTk, Image
+from tkinter import messagebox
+from PIL import ImageTk, Image, ImageDraw, ImageFont
 import random
 import mysql.connector as connector
 from customtkinter import *
 from tkcalendar import DateEntry
-from datetime import datetime
+from datetime import datetime, timedelta
+import threading
+
 
 # -----------------------------------------------Ships-------------------------------------------------
 class Ships:
     speed = 0
     # IMO Number = The International Maritime Organization (IMO) number uniquely identifies each seagoing ship. It is an important reference for tracking and managing vessels.
-    def __init__(self,name,IMO_Number,condition,capacity,navigation_status,type,Embarkation,departuretime,Destination,arrivaltime,imagelocation, bookingstatus):
+    def __init__(self, name, IMO_Number , condition, capacity, navigation_status, type, Embarkation,departuretime,Destination,arrivaltime, imagelocation):
         self.Name = name
         self.Condition = condition
         self.Navigation_Status = navigation_status
@@ -23,7 +26,6 @@ class Ships:
         self.Arrival_Time = departuretime
         self.Image_Location = imagelocation
         self.Capacity = capacity
-        self.BookingStatus = bookingstatus
 
     @classmethod
     def change_condition(cls, condition):
@@ -118,22 +120,21 @@ def mainthing(x):
         tree_scroll.config(command=my_tree.yview)
 
         # Defining Columns
-        my_tree['columns'] = ('Name','Type','IMO','Capacity','Condition','Navigation Status','Embarkation','Departure Time','Destination','Arrival Time','Image Location', 'BookingStatus')
+        my_tree['columns'] = ('Name','Type','IMO','Capacity','Condition','Navigation Status','Embarkation','Departure Time','Destination','Arrival Time','Image Location')
 
         # Formating Columns
         my_tree.column('#0', width=0, stretch=NO)
-        my_tree.column('Name', anchor=CENTER, width=110)
+        my_tree.column('Name', anchor=CENTER, width=150)
         my_tree.column('Type', anchor=CENTER, width=150)
         my_tree.column('IMO', anchor=CENTER, width=110)
         my_tree.column('Capacity', anchor=CENTER, width=110)
-        my_tree.column('Condition', anchor=CENTER, width=110)
-        my_tree.column('Navigation Status', anchor=CENTER, width=110)
-        my_tree.column('Embarkation', anchor=CENTER, width=90)
+        my_tree.column('Condition', anchor=CENTER, width=150)
+        my_tree.column('Navigation Status', anchor=CENTER, width=150)
+        my_tree.column('Embarkation', anchor=CENTER, width=100)
         my_tree.column('Departure Time', anchor=CENTER, width=100)
         my_tree.column('Destination', anchor=CENTER, width=150)
         my_tree.column('Arrival Time', anchor=CENTER, width=100)
         my_tree.column('Image Location', anchor=CENTER, width=90)
-        my_tree.column('BookingStatus', anchor=CENTER, width=90)
 
 
         # Creating Heading
@@ -149,7 +150,6 @@ def mainthing(x):
         my_tree.heading('Destination', text='Destination', anchor=CENTER)
         my_tree.heading('Arrival Time', text='Arrival Time', anchor=CENTER)
         my_tree.heading('Image Location', text='Image Location', anchor=CENTER)
-        my_tree.heading('BookingStatus', text='Booking Status', anchor=CENTER)
 
 
         # -------------------------------REAL DATA------------------------------
@@ -167,12 +167,12 @@ def mainthing(x):
             if count%2 == 0:
                 my_tree.insert(parent='', index='end', iid=count, text='', 
                             values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7],
-                            record[8], record[9], record[10], record[11]), 
+                            record[8], record[9], record[10]), 
                             tags=('evenrow',))
             else:
                 my_tree.insert(parent='', index='end', iid=count, text='', 
                             values=(record[0], record[1], record[2], record[3], record[4], record[5], record[6], record[7],
-                            record[8], record[9], record[10], record[11]), 
+                            record[8], record[9], record[10]), 
                             tags=('oddrow',))
             count += 1
 
@@ -264,12 +264,6 @@ def mainthing(x):
         upload_button = CTkButton(master=data_frame, text='Upload Image', command=upload_image)
         upload_button.grid(row=2, column=7, padx=10, pady=10)
 
-        # Booking Status Label and Entry
-        booking_status_label = CTkLabel(data_frame, text='Booking Status')
-        booking_status_label.grid(row=3, column=4, padx=10, pady=10)
-        booking_status_entry = CTkOptionMenu(master=data_frame, values=['Booked', 'Not Booked'])
-        booking_status_entry.grid(row=3, column=5, padx=10, pady=10)
-
 
         # --------------Functions------------------
         # Clear Entries
@@ -281,6 +275,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
             image_path_entry.delete(0, END)
@@ -295,6 +291,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
             image_path_entry.delete(0, END)
@@ -313,7 +311,6 @@ def mainthing(x):
             embarkation_entry.insert(0, values[6])
             destination_entry.insert(0, values[8])
             image_path_entry.insert(0, values[10])
-            booking_status_entry.set(values[11])
 
             if selected:
                 show_info.pack(side=BOTTOM, anchor=SW, padx=10, pady=40)
@@ -352,15 +349,14 @@ def mainthing(x):
                 departuretime= departure_datetime,
                 Destination=destination_entry.get(),
                 arrivaltime=arrival_datetime,
-                imagelocation=image_path_entry.get(),
-                bookingstatus=booking_status_entry.get()
+                imagelocation=image_path_entry.get()
             )
 
             new_ship.update_speed()
             
             # MySQL
-            csor.execute("insert into SHIPDATA values('{}','{}',{},{},'{}','{}','{}','{}','{}','{}','{}','{}')".
-                        format(n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime,image_path_entry.get(), booking_status_entry.get()))
+            csor.execute("insert into SHIPDATA values('{}','{}',{},{},'{}','{}','{}','{}','{}','{}','{}')".
+                        format(n_entry.get(),type_entry.get(),imo_entry.get(),capacity_entry.get(),condition_entry.get(),navigation_status_entry.get(),embarkation_entry.get(),departure_datetime,destination_entry.get(),arrival_datetime,image_path_entry.get()))
             mydata.commit()
             
             n_entry.delete(0, END)
@@ -369,6 +365,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
             image_path_entry.delete(0, END)
@@ -406,8 +404,7 @@ def mainthing(x):
                     Departure_Time = '{}',
                     Departure = '{}',
                     Arrival_Time = '{}',
-                    Image = '{}',
-                    BookingStatus = '{}'
+                    Image = '{}'
                 WHERE IMO = {}
                 """.format(
                     n_entry.get(), 
@@ -421,7 +418,6 @@ def mainthing(x):
                     destination_entry.get(), 
                     arrival_datetime.strftime('%Y-%m-%d %H:%M:%S'),
                     image_path_entry.get(),
-                    booking_status_entry.get(),
                     my_tree.item(selected)['values'][2]  # Assuming 'IMO' is at index 2
                 )
             )
@@ -433,6 +429,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
             
@@ -451,6 +449,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
 
@@ -468,6 +468,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
 
@@ -484,6 +486,8 @@ def mainthing(x):
             capacity_entry.delete(0, END)
             condition_entry.delete(0, END)
             embarkation_entry.delete(0, END)
+            
+            
             destination_entry.delete(0, END)
             arrival_time_entry.delete(0, END)
 
