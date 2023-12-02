@@ -86,7 +86,7 @@ def verify_supplier(username, password):
 
 # --------------------------Supplier---------------------
 def supplier_menu(username):
-
+    pass
 
 
 # Username
