@@ -167,25 +167,36 @@ def admin_menu_for_port(port_name):
 
 # Supplier menu
 def supplier_menu(username):
-    print(f"\n--- Supplier Menu ({username}) ---")
-    # print("1. View ship details")
-    # print("2. Book a ship")
-    # print("3. View booked ships")
-    # print("4. Exit")
+    while True:
+        print(f"\n--- Supplier Menu ({username}) ---")
+        print("1. View available ships")
+        print("2. View ship details")
+        print("3. View ship route")
+        print("4. Book a ship")
+        print("5. View booked ships")
+        print("6. Exit")
 
-    # choice = input("Enter your choice: ")
+        choice = input("Enter your choice: ")
 
-    # if choice == "1":
-    #     view_ship_details()
-    # elif choice == "2":
-    #     book_ship(username)
-    # elif choice == "3":
-    #     view_booked_ships(username)
-    # elif choice == "4":
-    #     print("Exiting...")
-    # else:
-    #     print("Invalid choice. Please try again.")
-    #     supplier_menu(username)
+        if choice == "1":
+            view_available_ships()
+        elif choice == "2":
+            ship_id = input("Enter the ship ID: ")
+            view_ship_details(ship_id)
+        elif choice == "3":
+            ship_id = input("Enter the ship ID: ")
+            view_ship_route(ship_id)
+        elif choice == "4":
+            book_ship(username)
+        elif choice == "5":
+            view_booked_ships(username)
+        elif choice == "6":
+            print("Exiting...")
+            exit()
+        else:
+            print("Invalid choice. Please try again.")
+
+# -------------------------------------Admin Functions-----------------------------
 
 # Function to view ships at the port
 def view_ships_at_port(port_name):
@@ -226,6 +237,98 @@ def display_results(query):
         print(tabulate(result, headers=headers, tablefmt='pretty'))
     else:
         print("No results found.")
+
+# --------------------------------------------Supplier Functions---------------------------------
+# Function to view available ships
+def view_available_ships():
+    db = connect_to_database()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM ships WHERE current_status = 'At Port'")
+    display_results(cursor.fetchall())
+    db.close()
+
+# Function to view ship details
+def view_ship_details(ship_id):
+    db = connect_to_database()
+    cursor = db.cursor()
+    cursor.execute(f"SELECT * FROM ships WHERE ship_id = {ship_id}")
+    ship_data = cursor.fetchone()
+    if ship_data:
+        print("\nShip Details:")
+        print(f"Ship ID: {ship_data[0]}")
+        print(f"Name: {ship_data[1]}")
+        print(f"Capacity: {ship_data[2]}")
+        print(f"IMO: {ship_data[3]}")
+        print(f"Current Status: {ship_data[4]}")
+        print(f"Port Name: {ship_data[5]}")
+        print(f"Goods Status: {ship_data[6]}")
+        print(f"Departure Time: {ship_data[7]}")
+        print(f"Arrival Time: {ship_data[8]}")
+    else:
+        print("Ship not found.")
+    db.close()
+
+# Function to view ship route
+def view_ship_route(ship_id):
+    db = connect_to_database()
+    cursor = db.cursor()
+    cursor.execute(f"SELECT port_name, arrival_time FROM ships WHERE ship_id = {ship_id} ORDER BY arrival_time")
+    route_data = cursor.fetchall()
+    if route_data:
+        print("\nShip Route:")
+        for port, arrival_time in route_data:
+            print(f"{port} - Arrival Time: {arrival_time}")
+    else:
+        print("Ship not found.")
+    db.close()
+
+# Function to book a ship
+def book_ship(username):
+    view_available_ships()
+    ship_id = input("Enter the ship ID you want to book: ")
+
+    # Check if the ship is available
+    if is_ship_available(ship_id):
+        # Add logic to create a booking record in the database
+        create_booking(username, ship_id)
+        print(f"Booking confirmed! You have booked Ship ID {ship_id}.")
+    else:
+        print("Ship not available for booking.")
+
+# Function to create a booking record
+def create_booking(username, ship_id):
+    db = connect_to_database()
+    cursor = db.cursor()
+    booking_time = datetime.now()
+    insert_booking_query = f"INSERT INTO bookings (supplier_username, ship_id, booking_time) VALUES ('{username}', {ship_id}, '{booking_time}')"
+    cursor.execute(insert_booking_query)
+    db.commit()
+    db.close()
+
+# Function to check if the ship is available for booking
+def is_ship_available(ship_id):
+    db = connect_to_database()
+    cursor = db.cursor()
+    cursor.execute(f"SELECT * FROM ships WHERE ship_id = {ship_id} AND current_status = 'At Port'")
+    result = cursor.fetchone()
+    db.close()
+    return result is not None
+
+# Function to view booked ships for a supplier
+def view_booked_ships(username):
+    db = connect_to_database()
+    cursor = db.cursor()
+    cursor.execute(f"SELECT b.*, s.name as ship_name FROM bookings b JOIN ships s ON b.ship_id = s.ship_id WHERE b.supplier_username = '{username}'")
+    booked_ships = cursor.fetchall()
+    if booked_ships:
+        print("\nBooked Ships:")
+        for booking in booked_ships:
+            print(f"Ship Name: {booking[7]}")
+            print(f"Booking Time: {booking[5]}")
+            print("--------------")
+    else:
+        print("No booked ships found.")
+    db.close()
 
 # Main program flow
 def main():
