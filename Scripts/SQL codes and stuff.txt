@@ -15,3 +15,31 @@ Admin:-
 
 
 INSERT INTO SHIPDATA VALUES ('Nakul','Cargo',1234567,100000,'Good','DOCKED','CHN','2008-11-11 15:00','BOM','2008-11-11 19:00',LOAD_FILE(r"E:/Project CS/Vessel Traffic Management System/new_image.png"));
+
+
+
+INSERT INTO ships (ship_id, name, capacity, IMO, current_status, port_name, goods_status, departure_time, arrival_time)
+VALUES
+(1, 'ShipA', 10420, 'IMO123', 'At Port', 'Port1', 'In Transit', '2023-01-01 08:00:00', '2023-01-01 12:00:00'),
+(2, 'ShipB', 10680, 'IMO321', 'Arriving', 'Port4', 'In Transit', '2023-02-23 09:00:00', '2023-02-24 11:00:00'),
+(3, 'ShipC', 10520, 'IMO451', 'At Port', 'Port2', 'Unloaded', '2023-12-23 05:08:00', '2023-12-24 11:00:00'),
+(4, 'ShipD', 9800, 'IMO567', 'Departed', 'Port3', 'Loaded', '2023-03-15 14:30:00', '2023-03-16 18:45:00'),
+(5, 'ShipE', 11500, 'IMO789', 'In Transit', 'Port5', 'Loaded', '2023-04-10 11:45:00', '2023-04-11 14:30:00'),
+(6, 'ShipF', 9200, 'IMO890', 'At Port', 'Port1', 'Unloaded', '2023-05-05 07:20:00', '2023-05-05 15:30:00'),
+(7, 'ShipG', 8800, 'IMO999', 'Arriving', 'Port6', 'In Transit', '2023-06-20 18:00:00', '2023-06-21 22:30:00'),
+(8, 'ShipH', 10250, 'IMO111', 'At Port', 'Port2', 'Unloaded', '2023-07-12 09:15:00', '2023-07-12 14:45:00'),
+(9, 'ShipI', 9500, 'IMO222', 'Departed', 'Port7', 'Loaded', '2023-08-08 13:10:00', '2023-08-09 17:20:00'),
+(10, 'ShipJ', 10700, 'IMO333', 'In Transit', 'Port8', 'Loaded', '2023-09-30 16:45:00', '2023-10-01 20:00:00');
+
+INSERT INTO goods (goods_id, order_id, ship_id, status, timestamp)
+VALUES
+(1, 101, 1, 'In Transit', '2023-01-01 08:15:00'),
+(2, 102, 2, 'Loaded', '2023-02-23 09:30:00'),
+(3, 103, 3, 'Unloaded', '2023-12-23 05:30:00'),
+(4, 104, 4, 'In Transit', '2023-03-15 15:00:00'),
+(5, 105, 5, 'Loaded', '2023-04-10 12:00:00'),
+(6, 106, 6, 'Unloaded', '2023-05-05 07:45:00'),
+(7, 107, 7, 'In Transit', '2023-06-20 18:30:00'),
+(8, 108, 8, 'Unloaded', '2023-07-12 09:30:00'),
+(9, 109, 9, 'Loaded', '2023-08-08 13:30:00'),
+(10, 110, 10, 'In Transit', '2023-09-30 17:00:00');
