@@ -48,16 +48,17 @@ def simulate_time_passage():
         SET current_status = 'In Transit', goods_status = 'Loaded',
             departure_time = '{current_time}', arrival_time = '{(current_time + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}'
         WHERE current_status = 'At Port' AND port_name IN (
-            SELECT port_name FROM demand WHERE demand > 0 AND docked_ships < dock_limit
+            SELECT port_name FROM demand WHERE demand > 0
         )
     """
     cursor.execute(update_ships_departure_query)
 
     # Introduce random delays for ships in transit
-    introduce_random_delays_for_transit()
+    # introduce_random_delays_for_transit()
 
     db.commit()
     db.close()
+
 
 # Helper function to introduce random delays for ships in transit
 def introduce_random_delays_for_transit():
@@ -215,37 +216,34 @@ def verify_supplier(username, password):
 
 # Admin menu
 def admin_menu():
-    simulate_time_passage()
-    print("\n---------- Admin Menu -----------")
-    print("1. Choose Port")
-    print("2. Exit")
+    while True:
+        simulate_time_passage()
+        print("\n---------- Admin Menu -----------")
+        print("1. Choose Port")
+        print("2. Exit")
 
-    choice = input("Enter your choice: ")
+        choice = input("Enter your choice: ")
 
-    if choice == "1":
-        ports = get_available_ports()
-        if ports:
-            print("Available Ports:")
-            for i, port in enumerate(ports, 1):
-                print(f"{i}. {port}")
+        if choice == "1":
+            ports = get_available_ports()
+            if ports:
+                print("Available Ports:")
+                for i, port in enumerate(ports, 1):
+                    print(f"{i}. {port}")
 
-            port_choice = int(input("Enter the number of the port: "))
-            if 1 <= port_choice <= len(ports):
-                selected_port = ports[port_choice - 1]
-                admin_menu_for_port(selected_port)
+                port_choice = int(input("Enter the number of the port: "))
+                if 1 <= port_choice <= len(ports):
+                    selected_port = ports[port_choice - 1]
+                    admin_menu_for_port(selected_port)
+                else:
+                    print("Invalid port choice. Please try again.")
             else:
-                print("Invalid port choice. Please try again.")
-                admin_menu()
+                print("No ports available. Please check your database.")
+        elif choice == "2":
+            print("Exiting...")
+            exit()
         else:
-            print("No ports available. Please check your database.")
-            admin_menu()
-
-    elif choice == "2":
-        print("Exiting...")
-        exit()
-    else:
-        print("Invalid choice. Please try again.")
-        admin_menu()
+            print("Invalid choice. Please try again.")
 
 def admin_menu_for_port(port_name):
     while True:
@@ -306,7 +304,7 @@ def supplier_menu(username, port):
             view_booked_ships(username)
         elif choice == "6":
             print("Exiting...")
-            exit()
+            login()
         else:
             print("Invalid choice. Please try again.")
 
@@ -314,7 +312,7 @@ def supplier_menu(username, port):
 
 # Function to view ships at the port
 def view_ships_at_port(port_name):
-    query_ = f"SELECT * FROM ships WHERE port_name = '{port_name}' AND current_status = 'At Port'"
+    query_ = f"SELECT ship_id,name,capacity,IMO,port_name,goods_status,departure_time,arrival_time FROM ships WHERE port_name = '{port_name}' AND current_status = 'At Port'"
     display_results(query_)
 
 # Function to view arriving ships
@@ -330,12 +328,17 @@ def view_unloading_ships(port_name):
 # Function to view ship information
 def view_ship_information():
     ship_id = input("Enter the ship ID: ")
-    query_ = f"SELECT * FROM ships WHERE ship_id = {ship_id}"
+    query_ = f"SELECT ship_id,name,capacity,IMO,current_status,port_name,goods_status,departure_time,arrival_time FROM ships WHERE ship_id = {ship_id}"
     display_results(query_)
 
 # Function to view goods status
+# Function to view goods status
 def view_goods_status(port_name):
-    query_ = f"SELECT g.*, s.name as ship_name FROM goods g JOIN ships s ON g.ship_id = s.ship_id WHERE s.port_name = '{port_name}'"
+    query_ = f"""
+        SELECT s.*, 'No goods information' as goods_info
+        FROM ships s
+        WHERE s.port_name = '{port_name}'
+    """
     display_results(query_)
 
 # Helper function to execute and display query_ results
@@ -353,11 +356,17 @@ def display_results(query__):
 
 # --------------------------------------------Supplier Functions---------------------------------
 # Function to view available ships
-# Function to view available ships
 def view_available_ships():
     db = connect_to_database()
     cursor = db.cursor()
-    query = "SELECT ship_id, name, capacity, IMO, current_status, port_name, departure_time, arrival_time, goods_type_id FROM ships WHERE current_status = 'At Port' AND ship_id NOT IN (SELECT ship_id FROM bookings)"
+    query = """
+        SELECT ship_id, name, capacity, IMO, current_status, port_name, 
+               departure_time, arrival_time, goods_type_id
+        FROM ships
+        WHERE current_status = 'At Port' AND ship_id NOT IN (
+            SELECT ship_id FROM bookings
+        )
+    """
     cursor.execute(query)
     available_ships = cursor.fetchall()
     db.close()
@@ -366,7 +375,7 @@ def view_available_ships():
         headers = [desc[0] for desc in cursor.description]
         print(tabulate(available_ships, headers=headers, tablefmt='pretty'))
     else:
-        print("No ships are currently available at the port.")
+        print("No ships are currently available at the port or all ships are booked.")
 
 
 # Function to view ship details
@@ -422,17 +431,22 @@ def create_booking(username, ship_id):
     db = connect_to_database()
     cursor = db.cursor()
     booking_time = datetime.now()
-    insert_booking_query = f"INSERT INTO bookings (supplier_username, ship_id, booking_time) VALUES ('{username}', {ship_id}, '{booking_time}')"
 
     # Update the ship status to 'Booked'
+    update_ship_status_query = f"UPDATE ships SET current_status = 'Booked' WHERE ship_id = {ship_id}"
+
+    # Insert the booking record
+    insert_booking_query = f"INSERT INTO bookings (supplier_username, ship_id, booking_time) VALUES ('{username}', {ship_id}, '{booking_time}')"
+
     try:
-        cursor.execute(insert_booking_query)
-        update_ship_status_query = f"UPDATE ships SET current_status = 'Booked' WHERE ship_id = {ship_id}"
         cursor.execute(update_ship_status_query)
-    except mysql.connector.errors.IntegrityError:
-        print('Ship Already Booked')
-    finally:
+        cursor.execute(insert_booking_query)
         db.commit()
+        print(f"Booking confirmed! You have booked Ship ID {ship_id}.")
+    except mysql.connector.errors.IntegrityError:
+        db.rollback()
+        print('Ship already booked.')
+    finally:
         db.close()
 
 
@@ -440,16 +454,21 @@ def create_booking(username, ship_id):
 def is_ship_available(ship_id):
     db = connect_to_database()
     cursor = db.cursor()
-    cursor.execute(f"SELECT ship_id FROM ships WHERE ship_id = {ship_id} AND current_status = 'At Port'")
+    cursor.execute(f"""
+        SELECT ship_id
+        FROM ships
+        WHERE ship_id = {ship_id}
+            AND current_status = 'At Port'
+            AND ship_id NOT IN (SELECT ship_id FROM bookings)
+    """)
     result = cursor.fetchone()
     db.close()
     return result is not None
 
-# Function to view booked ships for a supplier
 def view_booked_ships(username):
     db = connect_to_database()
     cursor = db.cursor()
-    cursor.execute(f"SELECT DISTINCT b.*, s.name as ship_name FROM bookings b JOIN ships s ON b.ship_id = s.ship_id WHERE b.supplier_username = '{username}'")
+    cursor.execute(f"SELECT DISTINCT b.*, s.name as ship_name FROM bookings b JOIN ships s ON b.ship_id = s.ship_id WHERE b.supplier_username = '{username}' AND b.booking_time IS NOT NULL")
     booked_ships = cursor.fetchall()
     if booked_ships:
         print("\nBooked Ships:")
