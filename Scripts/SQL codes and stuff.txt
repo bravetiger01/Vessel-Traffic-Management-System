@@ -30,3 +30,61 @@ VALUES
 (8, 'ShipH', 10250, 'IMO111', 'At Port', 'Port2', 'Unloaded', '2023-07-12 09:15:00', '2023-07-12 14:45:00'),
 (9, 'ShipI', 9500, 'IMO222', 'Departed', 'Port7', 'Loaded', '2023-08-08 13:10:00', '2023-08-09 17:20:00'),
 (10, 'ShipJ', 10700, 'IMO333', 'In Transit', 'Port8', 'Loaded', '2023-09-30 16:45:00', '2023-10-01 20:00:00');
+
+INSERT INTO suppliers (supplier_id,name,port_id)
+VALUES
+(6,'Supplier6',6),
+(7,'Supplier7',7),
+(8,'Supplier8',8);
+
+UPDATE ships SET supplier_id = 5 WHERE port_name = 'Port5';
+
+INSERT INTO demand (port_name, demand, docked_ships, dock_limit)
+VALUES
+    ('Port1', 10, 2, 2),
+    ('Port2', 5, 1, 2),
+    ('Port4', 8, 1, 2),
+    ('Port5', 8, 1, 2),
+    ('Port6', 8, 1, 2),
+    ('Port7', 8, 1, 2),
+    ('Port8', 8, 1, 2);
+
+UPDATE demand
+SET port_name = (SELECT port_name FROM ports WHERE ports.port_name = demand.port_name);
+
+ALTER TABLE ships
+ADD COLUMN port_id INT,
+ADD CONSTRAINT fk_ships_ports FOREIGN KEY (port_id) REFERENCES ports(port_id);
+
+UPDATE suppliers
+SET password = 'supp1'
+WHERE supplier_id = 1;
+
+UPDATE suppliers
+SET password = 'supp2'
+WHERE supplier_id = 2;
+
+UPDATE suppliers
+SET password = 'supp3'
+WHERE supplier_id = 3;
+
+UPDATE suppliers
+SET password = 'supp4'
+WHERE supplier_id = 4;
+
+UPDATE suppliers
+SET password = 'supp5'
+WHERE supplier_id = 5;
+
+UPDATE suppliers
+SET password = 'supp6'
+WHERE supplier_id = 6;
+
+UPDATE suppliers
+SET password = 'supp7'
+WHERE supplier_id = 7;
+
+UPDATE suppliers
+SET password = 'supp8'
+WHERE supplier_id = 8;
+

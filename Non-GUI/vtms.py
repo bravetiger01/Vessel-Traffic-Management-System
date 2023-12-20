@@ -1,6 +1,7 @@
 import mysql.connector
 from tabulate import tabulate
 from datetime import datetime, timedelta
+import random
 
 # Connect to MySQL database
 def connect_to_database():
@@ -29,12 +30,20 @@ def simulate_time_passage():
     # Get current system time
     current_time = datetime.now()
 
-    # Update ships' statuses based on timestamps
-    update_ships_query_ = f"UPDATE ships SET current_status = 'At Port', goods_status = 'Unloaded', arrival_time = '{current_time}' WHERE arrival_time <= '{current_time}'"
-    cursor.execute(update_ships_query_)
+    # Update ships' statuses based on timestamps and supplier-specific ports
+    update_ships_query = f"""
+        UPDATE ships
+        SET current_status = 'At Port', goods_status = 'Unloaded'
+        WHERE arrival_time <= '{current_time}' AND port_name IN (
+            SELECT p.port_name
+            FROM suppliers s
+            JOIN ports p ON s.port_id = p.port_id
+        )
+    """
+    cursor.execute(update_ships_query)
 
     # Update ships' destinations and load goods if the ship is at port and there is demand
-    update_ships_departure_query_ = f"""
+    update_ships_departure_query = f"""
         UPDATE ships
         SET current_status = 'In Transit', goods_status = 'Loaded',
             departure_time = '{current_time}', arrival_time = '{(current_time + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}'
@@ -42,26 +51,92 @@ def simulate_time_passage():
             SELECT port_name FROM demand WHERE demand > 0 AND docked_ships < dock_limit
         )
     """
-    cursor.execute(update_ships_departure_query_)
+    cursor.execute(update_ships_departure_query)
+
+    # Introduce random delays for ships in transit
+    introduce_random_delays_for_transit()
 
     db.commit()
     db.close()
 
+# Helper function to introduce random delays for ships in transit
+def introduce_random_delays_for_transit():
+    db = connect_to_database()
+    cursor = db.cursor()
 
+    # Update ships with random delays for those in transit
+    update_query = """
+        UPDATE ships
+        SET is_delayed = 1,
+            delayed_time = NOW() - INTERVAL FLOOR(RAND() * 30) MINUTE
+        WHERE current_status = 'In Transit'
+    """
+
+    try:
+        cursor.execute(update_query)
+
+        # Fetch delayed ships and notify the supplier
+        delayed_ships_query = """
+            SELECT b.supplier_username, s.ship_id, s.name as ship_name, s.delayed_time
+            FROM bookings b
+            JOIN ships s ON b.ship_id = s.ship_id
+            WHERE s.is_delayed = 1
+        """
+        cursor.execute(delayed_ships_query)
+        delayed_ships = cursor.fetchall()
+
+        for supplier_username, ship_id, ship_name, delayed_time in delayed_ships:
+            notify_supplier_about_delay(supplier_username, ship_id, ship_name, delayed_time)
+
+        db.commit()
+        print("Random delays introduced successfully.")
+    except Exception as e:
+        print(f"Error introducing random delays: {e}")
+
+    db.close()
+
+def notify_supplier_about_delay(supplier_username, ship_id, ship_name, delayed_time):
+    # You can implement your notification logic here
+    print(f"Dear {supplier_username}, your booked ship {ship_name} (ID: {ship_id}) has been delayed. New arrival time: {delayed_time}")
+
+
+
+# Function to simulate traffic clearance and unloading at port
 def simulate_traffic_clearance():
     db = connect_to_database()
     cursor = db.cursor()
 
-    # Update ships' statuses to 'Unloading' after a delay of 1 hour
-    update_ships_unloading_query_ = f"""
+    # Update ships' statuses to 'Unloading' after a delay of 1 hour from arrival time
+    update_ships_unloading_query = f"""
         UPDATE ships
         SET current_status = 'Unloading', goods_status = 'Unloading'
-        WHERE current_status = 'At Port' AND arrival_time + INTERVAL 1 HOUR <= NOW()
+        WHERE current_status = 'At Port'
+        AND TIMESTAMPDIFF(HOUR, arrival_time, NOW()) >= 1
     """
-    cursor.execute(update_ships_unloading_query_)
+    cursor.execute(update_ships_unloading_query)
+
+    # Mark ships as unbooked after unloading
+    mark_unbooked_query = f"""
+        UPDATE bookings
+        SET booking_time = NULL
+        WHERE ship_id IN (
+            SELECT ship_id FROM ships
+            WHERE current_status = 'Unloading' AND goods_status = 'Unloading'
+        )
+    """
+    cursor.execute(mark_unbooked_query)
+
+    # Update ship status to reflect departure from port after unloading
+    update_departure_query = f"""
+        UPDATE ships
+        SET current_status = 'In Transit'
+        WHERE current_status = 'Unloading' AND goods_status = 'Unloading'
+    """
+    cursor.execute(update_departure_query)
 
     db.commit()
     db.close()
+
 
 
 # User login
@@ -81,16 +156,33 @@ def login():
     elif aos.lower() == "supplier":
         username = input("Enter your username: ")
         password = input("Enter your password: ")
-        # Perform supplier login verification
         if verify_supplier(username, password):
-            print("Supplier login successful!")
-            # Call supplier menu function
-            supplier_menu(username)
+            port_name = assign_supplier_to_port(username)
+            if port_name:
+                print(f"Supplier login successful! Assigned to Port: {port_name}")
+                supplier_menu(username, port_name)
+            else:
+                print("Supplier not assigned to any port.")
         else:
-            print("Invalid credentials. Please try again.")
+            print("Invalid credentials.")
+
 
     else:
         print("Invalid role. Please try again.")
+
+# Helper function to assign a supplier to a port
+def assign_supplier_to_port(username):
+    db = connect_to_database()
+    cursor = db.cursor()
+    cursor.execute(f"""
+        SELECT p.port_name
+        FROM suppliers s
+        JOIN ports p ON s.port_id = p.port_id
+        WHERE s.name = '{username}'
+    """)
+    port = cursor.fetchone()
+    db.close()
+    return port[0] if port else None
 
 # Admin login verification
 def verify_admin(username, password):
@@ -108,21 +200,17 @@ def verify_admin(username, password):
         db.close()
         return result is None
 
-# Supplier login verification
 def verify_supplier(username, password):
     db = connect_to_database()
     cursor = db.cursor()
-    cursor.execute("select * from authentication")
-    result = cursor.fetchall()
-    for data in result:
-        if data[0] == username and data[1] == password:
-            db.close()
-            return result is not None
-        else:
-            pass
-    else:
-        db.close()
-        return result is None
+    cursor.execute(f"SELECT password FROM suppliers WHERE suppliers.name = '{username}'")
+    hashed_password = cursor.fetchone()
+    db.close()
+
+    if hashed_password:
+        return hashed_password[0] == password
+
+      
 
 
 # Admin menu
@@ -191,9 +279,10 @@ def admin_menu_for_port(port_name):
             print("Invalid choice. Please try again.")
 
 # Supplier menu
-def supplier_menu(username):
+def supplier_menu(username, port):
     while True:
-        print(f"\n--- Supplier Menu ({username}) ---")
+        print(f"\n----------------- Supplier Menu --------------------")
+        print(f'\n-----------Welcome {username} of {port}--------------')
         print("1. View available ships")
         print("2. View ship details")
         print("3. View ship route")
