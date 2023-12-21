@@ -92,3 +92,62 @@ UPDATE ships
 SET destination_port= 'Port4'
 WHERE port_name='Port1';
 
+UPDATE ships
+SET destination_port= 'Port6'
+WHERE port_name='Port2';
+
+UPDATE ships
+SET destination_port= 'Port7'
+WHERE port_name='Port3';
+
+UPDATE ships
+SET destination_port= 'Port5'
+WHERE port_name='Port4';
+
+UPDATE ships
+SET destination_port= 'Port8'
+WHERE port_name='Port5';
+
+
+UPDATE ships
+SET destination_port= 'Port1'
+WHERE port_name='Port6';
+
+UPDATE ships
+SET destination_port= 'Port2'
+WHERE port_name='Port7';
+
+UPDATE ships
+SET destination_port= 'Port3'
+WHERE port_name='Port8';
+
+INSERT INTO bookings (supplier_username, ship_id, booking_time)
+SELECT DISTINCT
+  name AS suppliers,
+  ship_id,
+  NOW() AS booking_time
+FROM ships
+WHERE current_status = 'In Transit' AND booking_Status = 'Booked';
+
+INSERT INTO bookings (supplier_username, ship_id, booking_time)
+SELECT DISTINCT
+  s.name AS supplier_username,
+  ship_id,
+  NOW() AS booking_time
+FROM ships
+JOIN suppliers s ON s.port_id = ships.port_id
+WHERE current_status = 'In Transit' AND booking_Status = 'Booked';
+
+
+
+
+
+
+
+
+
+
+
+
+
+

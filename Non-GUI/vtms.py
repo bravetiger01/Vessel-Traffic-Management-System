@@ -28,13 +28,45 @@ def simulate_time_passage():
     cursor = db.cursor()
 
     # Get current system time
-    current_time = datetime.now()
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    change_surrent_status1 = f"""
+        UPDATE ships
+        SET current_status = 'Preparing To Leave', goods_status = 'Loading'
+        WHERE departure_time > '{current_time}'
+    """
+
+    cursor.execute(change_surrent_status1)
+
+    change_surrent_status2 = f"""
+        UPDATE ships
+        SET current_status = 'In Transit', goods_status = 'Loaded'
+        WHERE departure_time < '{current_time}' AND arrival_time > '{current_time}'
+    """
+
+    cursor.execute(change_surrent_status2)
+
+    change_surrent_status3 = f"""
+        UPDATE ships
+        SET current_status = 'At Port', goods_status = 'Loading'
+        WHERE arrival_time < '{current_time}'
+    """
+
+    cursor.execute(change_surrent_status3)
+
+    update_goods_status = f"""
+        UPDATE ships
+        SET goods_status = 'Unloading'
+        WHERE TIMESTAMPDIFF(HOUR, '{current_time}',arrival_time) < 1
+    """
+
+    cursor.execute(update_goods_status)
 
     # Update ships' statuses based on timestamps and supplier-specific ports
     update_ships_query = f"""
         UPDATE ships
         SET current_status = 'At Port', goods_status = 'Unloaded'
-        WHERE arrival_time <= '{current_time}' AND port_name IN (
+        WHERE (TIMESTAMPDIFF(HOUR, arrival_time, '{current_time}') >= 1) AND port_name IN (
             SELECT p.port_name
             FROM suppliers s
             JOIN ports p ON s.port_id = p.port_id
@@ -47,13 +79,15 @@ def simulate_time_passage():
         UPDATE ships
         SET current_status = 'In Transit', goods_status = 'Loaded',
             departure_time = '{current_time}',
-            arrival_time = '{(current_time + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}',
-            destination_port = '{random.choice(get_available_ports())}'  -- Randomly select a destination port
-        WHERE current_status = 'At Port' AND port_name IN (
+            arrival_time = '{(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}',
+            destination_port = '{random.choice(get_available_ports())}'
+        WHERE (current_status = 'At Port' AND TIMESTAMPDIFF(DAY, '{current_time}' ,arrival_time) >= 1) AND port_name IN (
             SELECT port_name FROM demand WHERE demand > 0
         )
     """
     cursor.execute(update_ships_departure_query)
+
+    
 
     db.commit()
     db.close()
@@ -242,6 +276,7 @@ def admin_menu():
             exit()
         else:
             print("Invalid choice. Please try again.")
+            admin_menu()
 
 def admin_menu_for_port(port_name):
     while True:
@@ -277,8 +312,8 @@ def admin_menu_for_port(port_name):
 # Supplier menu
 def supplier_menu(username, port):
     while True:
-        print(f"\n----------------- Supplier Menu --------------------")
-        print(f'\n-----------Welcome {username} of {port}--------------')
+        print(f"\n---------------------------------------- Supplier Menu ---------------------------------------")
+        print(f'\n----------------------------------Welcome {username} of {port}--------------------------------')
         print("1. View available ships")
         print("2. View ship details")
         print("3. View ship route")
@@ -315,12 +350,12 @@ def view_ships_at_port(port_name):
 
 # Function to view arriving ships
 def view_arriving_ships(port_name):
-    query_ = f"SELECT * FROM ships WHERE destination_port = '{port_name}' AND current_status = 'In Transit'"
+    query_ = f"SELECT ship_id,name,capacity,IMO,current_status,port_name,destination_port,goods_status,departure_time,arrival_time FROM ships WHERE destination_port = '{port_name}' AND (current_status = 'In Transit' OR current_status = 'Preparing To Leave')"
     display_results(query_)
 
 # Function to view unloading ships
 def view_unloading_ships(port_name):
-    query_ = f"SELECT * FROM ships WHERE port_name = '{port_name}' AND current_status = 'Unloading'"
+    query_ = f"SELECT ship_id,name,capacity,IMO,port_name,destination_port,goods_status FROM ships WHERE ((port_name = '{port_name}' OR destination_port = '{port_name}') AND current_status = 'Unloading')"
     display_results(query_)
 
 # Function to view ship information
@@ -330,12 +365,11 @@ def view_ship_information():
     display_results(query_)
 
 # Function to view goods status
-# Function to view goods status
-def view_goods_status(port_name):
+def view_goods_status(departure_name):
     query_ = f"""
-        SELECT s.*, 'No goods information' as goods_info
+        SELECT s.ship_id, s.name,s.capacity,s.IMO,s.current_status,s.port_name,s.destination_port,s.goods_status,s.goods_type_id,s.departure_time,s.arrival_time,s.is_delayed,s.delayed_time
         FROM ships s
-        WHERE s.port_name = '{port_name}'
+        WHERE s.port_name = '{departure_name}'
     """
     display_results(query_)
 
@@ -420,21 +454,21 @@ def book_ship(username):
     if is_ship_available(ship_id):
         # Add logic to create a booking record in the database
         create_booking(username, ship_id)
-        print(f"Booking confirmed! You have booked Ship ID {ship_id}.")
     else:
         print("Ship not available for booking.")
 
-# Function to create a booking record
 def create_booking(username, ship_id):
     db = connect_to_database()
     cursor = db.cursor()
     booking_time = datetime.now()
 
     # Update the ship status to 'Booked'
-    update_ship_status_query = f"UPDATE ships SET current_status = 'Booked' WHERE ship_id = {ship_id}"
+    update_ship_status_query = f"UPDATE ships SET booking_status = 'Booked' WHERE ship_id = {ship_id}"
+    print(f"Debug: {update_ship_status_query}")
 
     # Insert the booking record
     insert_booking_query = f"INSERT INTO bookings (supplier_username, ship_id, booking_time) VALUES ('{username}', {ship_id}, '{booking_time}')"
+    print(f"Debug: {insert_booking_query}")
 
     try:
         cursor.execute(update_ship_status_query)
@@ -444,8 +478,10 @@ def create_booking(username, ship_id):
     except mysql.connector.errors.IntegrityError:
         db.rollback()
         print('Ship already booked.')
+
     finally:
         db.close()
+
 
 
 # Function to check if the ship is available for booking
@@ -466,8 +502,16 @@ def is_ship_available(ship_id):
 def view_booked_ships(username):
     db = connect_to_database()
     cursor = db.cursor()
-    cursor.execute(f"SELECT DISTINCT b.*, s.name as ship_name FROM bookings b JOIN ships s ON b.ship_id = s.ship_id WHERE b.supplier_username = '{username}' AND b.booking_time IS NOT NULL")
+
+    # Select booked ships with matching ship_id and booking_status
+    cursor.execute(f"""
+        SELECT DISTINCT b.*, s.name as ship_name
+        FROM bookings b
+        JOIN ships s ON b.ship_id = s.ship_id
+        WHERE (b.supplier_username = '{username}' AND s.booking_status = 'Booked')
+    """)
     booked_ships = cursor.fetchall()
+
     if booked_ships:
         print("\nBooked Ships:")
         for booking in booked_ships:
@@ -478,6 +522,7 @@ def view_booked_ships(username):
             print("--------------")
     else:
         print("No booked ships found.")
+
     db.close()
 
 # Main program flow
@@ -487,3 +532,5 @@ def main():
 
 # Start the program
 main()
+
+
