@@ -532,5 +532,3 @@ def main():
 
 # Start the program
 main()
-
-
