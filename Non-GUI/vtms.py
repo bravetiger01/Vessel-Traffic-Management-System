@@ -46,19 +46,17 @@ def simulate_time_passage():
     update_ships_departure_query = f"""
         UPDATE ships
         SET current_status = 'In Transit', goods_status = 'Loaded',
-            departure_time = '{current_time}', arrival_time = '{(current_time + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}'
+            departure_time = '{current_time}',
+            arrival_time = '{(current_time + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}',
+            destination_port = '{random.choice(get_available_ports())}'  -- Randomly select a destination port
         WHERE current_status = 'At Port' AND port_name IN (
             SELECT port_name FROM demand WHERE demand > 0
         )
     """
     cursor.execute(update_ships_departure_query)
 
-    # Introduce random delays for ships in transit
-    # introduce_random_delays_for_transit()
-
     db.commit()
     db.close()
-
 
 # Helper function to introduce random delays for ships in transit
 def introduce_random_delays_for_transit():
@@ -317,7 +315,7 @@ def view_ships_at_port(port_name):
 
 # Function to view arriving ships
 def view_arriving_ships(port_name):
-    query_ = f"SELECT * FROM ships WHERE port_name = '{port_name}' AND current_status = 'Arriving'"
+    query_ = f"SELECT * FROM ships WHERE destination_port = '{port_name}' AND current_status = 'In Transit'"
     display_results(query_)
 
 # Function to view unloading ships
@@ -328,7 +326,7 @@ def view_unloading_ships(port_name):
 # Function to view ship information
 def view_ship_information():
     ship_id = input("Enter the ship ID: ")
-    query_ = f"SELECT ship_id,name,capacity,IMO,current_status,port_name,goods_status,departure_time,arrival_time FROM ships WHERE ship_id = {ship_id}"
+    query_ = f"SELECT ship_id,name,capacity,IMO,current_status,port_name,destination_port,goods_status,departure_time,arrival_time FROM ships WHERE ship_id = {ship_id}"
     display_results(query_)
 
 # Function to view goods status

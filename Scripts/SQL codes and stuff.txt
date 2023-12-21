@@ -88,3 +88,7 @@ UPDATE suppliers
 SET password = 'supp8'
 WHERE supplier_id = 8;
 
+UPDATE ships
+SET destination_port= 'Port4'
+WHERE port_name='Port1';
+
