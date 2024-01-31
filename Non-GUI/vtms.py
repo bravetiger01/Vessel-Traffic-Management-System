@@ -101,8 +101,8 @@ def introduce_random_delays_for_transit(supplier_username):
     update_query = f"""
     UPDATE ships
     SET is_delayed = 1,
-        delayed_time = NOW() - INTERVAL FLOOR(RAND() * 30) MINUTE,
-        arrival_time = NOW() + INTERVAL FLOOR(RAND() * 30) MINUTE
+        delayed_time = NOW() + INTERVAL FLOOR(RAND() * 30) MINUTE,
+        arrival_time = arrival_time + INTERVAL FLOOR(RAND() * 30) MINUTE
     WHERE current_status = 'In Transit' and supplier_id in (SELECT supplier_id from suppliers WHERE name = '{supplier_username}')
 """
 
@@ -114,25 +114,30 @@ def introduce_random_delays_for_transit(supplier_username):
             SELECT b.supplier_username, s.ship_id, s.name as ship_name, s.delayed_time, s.arrival_time
             FROM bookings b
             JOIN ships s ON b.ship_id = s.ship_id
-            WHERE s.is_delayed = 1 and supplier_username = {supplier_username}
+            WHERE s.is_delayed = 1 and supplier_username = '{supplier_username}'
         """
         cursor.execute(delayed_ships_query)
         delayed_ships = cursor.fetchall()
 
         for supplier_username, ship_id, ship_name, delayed_time, new_arrival_time in delayed_ships:
-            notify_supplier_about_delay(supplier_username, ship_id, ship_name, delayed_time, new_arrival_time)
+            notify_supplier_about_delay(supplier_username,ship_id,ship_name,delayed_time)
+
+
+        update_query2 = f"""UPDATE ships set arrival_time = delayed_time WHERE is_delayed = 1"""
+
+        cursor.execute(update_query2)
 
         db.commit()
-        print("Random delays introduced successfully.")
+        # print("Random delays introduced successfully.")
     except Exception as e:
         print(f"Error introducing random delays: {e}")
         db.rollback()
 
     db.close()
 
-def notify_supplier_about_delay(supplier_username, ship_id, ship_name, delayed_time):
+def notify_supplier_about_delay(supplier_username, ship_id, ship_name, new_arrival_time):
     # You can implement your notification logic here
-    print(f"Dear {supplier_username}, your booked ship {ship_name} (ID: {ship_id}) has been delayed. New arrival time: {delayed_time}")
+    print(f"Dear {supplier_username}, your booked ship {ship_name} (ID: {ship_id}) has been delayed. New arrival time: {new_arrival_time}")
 
 
 
