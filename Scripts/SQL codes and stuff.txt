@@ -141,12 +141,15 @@ WHERE current_status = 'In Transit' AND booking_Status = 'Booked';
 
 
 
+UPDATE data SET StudentUID = ' 46B782F9' where Name='Suraj';
 
+UPDATE data SET StudentUID = ' D6CF80F9' where Name='Nakul';
 
+UPDATE data SET StudentUID = ' 59F91C18' where Name='Arpit Ji';
 
+UPDATE data SET StudentUID = ' E3989A14' where Name='Panikar N';
 
-
-
+UPDATE data SET StudentUID = ' A3832716' where Name='Deva';
 
 
 
