@@ -29,30 +29,31 @@ def simulate_time_passage():
 
     # Get current system time
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(current_time)
 
-    change_surrent_status1 = f"""
+    change_current_status1 = f"""
         UPDATE ships
         SET current_status = 'Preparing To Leave', goods_status = 'Loading'
         WHERE departure_time > '{current_time}'
     """
 
-    cursor.execute(change_surrent_status1)
+    cursor.execute(change_current_status1)
 
-    change_surrent_status2 = f"""
+    change_current_status2 = f"""
         UPDATE ships
         SET current_status = 'In Transit', goods_status = 'Loaded'
         WHERE departure_time < '{current_time}' AND arrival_time > '{current_time}'
     """
 
-    cursor.execute(change_surrent_status2)
+    cursor.execute(change_current_status2)
 
-    change_surrent_status3 = f"""
+    change_current_status3 = f"""
         UPDATE ships
         SET current_status = 'At Port', goods_status = 'Loading'
         WHERE arrival_time < '{current_time}'
     """
 
-    cursor.execute(change_surrent_status3)
+    cursor.execute(change_current_status3)
 
     update_goods_status = f"""
         UPDATE ships
@@ -81,19 +82,16 @@ def simulate_time_passage():
             departure_time = '{current_time}',
             arrival_time = '{(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')}',
             destination_port = '{random.choice(get_available_ports())}'
-        WHERE (current_status = 'At Port' AND TIMESTAMPDIFF(DAY, '{current_time}' ,arrival_time) >= 1) AND port_name IN (
-            SELECT port_name FROM demand WHERE demand > 0
-        )
+        WHERE (current_status = 'At Port' AND TIMESTAMPDIFF(DAY,arrival_time,'{current_time}') >= 1) AND port_name IN (SELECT port_name FROM demand WHERE demand > 0)
     """
     cursor.execute(update_ships_departure_query)
-
-    
+    print(f"Rows updated: {cursor.rowcount}")
 
     db.commit()
     db.close()
 
 # Helper function to introduce random delays for ships in transit
-def introduce_random_delays_for_transit(supplier_username):
+def introduce_delays_for_transit(supplier_username):
     db = connect_to_database()
     cursor = db.cursor()
 
@@ -200,7 +198,7 @@ def login():
             port_name = assign_supplier_to_port(username)
             if port_name:
                 print(f"Supplier login successful! Assigned to Port: {port_name}")
-                introduce_random_delays_for_transit(username)
+                introduce_delays_for_transit(username)
                 supplier_menu(username, port_name)
             else:
                 print("Supplier not assigned to any port.")
@@ -536,6 +534,7 @@ def view_booked_ships(username):
 # Main program flow
 def main():
     print("-----------------------Welcome to the Vessel Traffic Management System (VTMS)!--------------------")
+    simulate_time_passage()
     login()
 
 # Start the program
