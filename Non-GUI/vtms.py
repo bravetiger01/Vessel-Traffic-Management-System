@@ -164,14 +164,6 @@ def simulate_traffic_clearance():
     """
     cursor.execute(mark_unbooked_query)
 
-    # Update ship status to reflect departure from port after unloading
-    update_departure_query = f"""
-        UPDATE ships
-        SET current_status = 'In Transit'
-        WHERE current_status = 'Unloading' AND goods_status = 'Unloading'
-    """
-    cursor.execute(update_departure_query)
-
     db.commit()
     db.close()
 
@@ -400,8 +392,7 @@ def view_available_ships():
     query = """
         SELECT ship_id, name, capacity, IMO, current_status, port_name, 
                departure_time, arrival_time, goods_type_id
-        FROM ships
-        WHERE current_status = 'At Port' AND ship_id NOT IN (
+        FROM ships WHERE current_status = 'At Port' AND ship_id NOT IN (
             SELECT ship_id FROM bookings
         )
     """
@@ -514,7 +505,7 @@ def view_booked_ships(username):
         SELECT DISTINCT b.*, s.name as ship_name
         FROM bookings b
         JOIN ships s ON b.ship_id = s.ship_id
-        WHERE (b.supplier_username = '{username}' AND s.booking_status = 'Booked')
+        WHERE (b.supplier_username = '{username}')
     """)
     booked_ships = cursor.fetchall()
 
