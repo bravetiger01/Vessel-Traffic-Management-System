@@ -85,7 +85,6 @@ def simulate_time_passage():
         WHERE (current_status = 'At Port' AND TIMESTAMPDIFF(DAY,arrival_time,'{current_time}') >= 1) AND port_name IN (SELECT port_name FROM demand WHERE demand > 0)
     """
     cursor.execute(update_ships_departure_query)
-    print(f"Rows updated: {cursor.rowcount}")
 
     db.commit()
     db.close()
